@@ -3,13 +3,17 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: INDO DUTA TECH - Premium Management System API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: units
+    description: Laptop unit inventory management
+  - name: dashboard
+    description: Dashboard and analytics
 paths:
   /healthz:
     get:
@@ -24,6 +28,220 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /units:
+    get:
+      operationId: listUnits
+      tags: [units]
+      summary: List all units
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [PROSES, READY, TERJUAL]
+          required: false
+          description: Filter by unit status
+      responses:
+        "200":
+          description: List of units
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Unit"
+    post:
+      operationId: createUnit
+      tags: [units]
+      summary: Create a new unit (Beli)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UnitInput"
+      responses:
+        "201":
+          description: Unit created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Unit"
+
+  /units/{id}:
+    get:
+      operationId: getUnit
+      tags: [units]
+      summary: Get a single unit
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      responses:
+        "200":
+          description: Unit detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Unit"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    patch:
+      operationId: updateUnit
+      tags: [units]
+      summary: Update a unit
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UnitUpdate"
+      responses:
+        "200":
+          description: Unit updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Unit"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      operationId: deleteUnit
+      tags: [units]
+      summary: Delete a unit
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      responses:
+        "204":
+          description: Deleted
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /units/{id}/qc:
+    post:
+      operationId: completeQc
+      tags: [units]
+      summary: Complete QC inspection and mark unit as READY
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/QcInput"
+      responses:
+        "200":
+          description: QC completed, unit now READY
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Unit"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /units/{id}/jual:
+    post:
+      operationId: markSold
+      tags: [units]
+      summary: Mark unit as TERJUAL (sold)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/JualInput"
+      responses:
+        "200":
+          description: Unit marked as sold
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Unit"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /units/{id}/caption:
+    get:
+      operationId: getUnitCaption
+      tags: [units]
+      summary: Generate social media caption for a unit
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      responses:
+        "200":
+          description: Generated caption
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CaptionResult"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /dashboard:
+    get:
+      operationId: getDashboard
+      tags: [dashboard]
+      summary: Get dashboard summary stats
+      responses:
+        "200":
+          description: Dashboard summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardStats"
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +252,191 @@ components:
       required:
         - status
 
+    Unit:
+      type: object
+      required:
+        - id
+        - tipe
+        - spek
+        - minus
+        - kelengkapan
+        - hargaBeli
+        - biayaQc
+        - status
+        - createdAt
+      properties:
+        id:
+          type: number
+        tipe:
+          type: string
+          description: Brand and model name (e.g. Asus VivoBook 14)
+        spek:
+          type: string
+          description: Hardware specifications
+        minus:
+          type: string
+          description: Initial condition issues
+        kelengkapan:
+          type: string
+          description: Accessories included
+        hargaBeli:
+          type: number
+          description: Purchase price in IDR
+        biayaQc:
+          type: number
+          description: QC/parts cost in IDR
+        baterai:
+          type: ["number", "null"]
+          description: Battery health percentage
+        appTambahan:
+          type: ["string", "null"]
+          description: Extra software installed
+        fisik:
+          type: ["string", "null"]
+          description: Physical condition after QC
+        status:
+          type: string
+          enum: [PROSES, READY, TERJUAL]
+        hargaJual:
+          type: ["number", "null"]
+          description: Actual sale price in IDR
+        tanggalJual:
+          type: ["string", "null"]
+          format: date-time
+          description: Date sold
+        createdAt:
+          type: string
+          format: date-time
+
+    UnitInput:
+      type: object
+      required:
+        - tipe
+        - spek
+        - minus
+        - kelengkapan
+        - hargaBeli
+      properties:
+        tipe:
+          type: string
+          minLength: 1
+        spek:
+          type: string
+          minLength: 1
+        minus:
+          type: string
+          minLength: 1
+        kelengkapan:
+          type: string
+          minLength: 1
+        hargaBeli:
+          type: number
+          minimum: 0
+
+    UnitUpdate:
+      type: object
+      properties:
+        tipe:
+          type: string
+          minLength: 1
+        spek:
+          type: string
+          minLength: 1
+        minus:
+          type: string
+        kelengkapan:
+          type: string
+        hargaBeli:
+          type: number
+          minimum: 0
+
+    QcInput:
+      type: object
+      required:
+        - baterai
+        - fisik
+        - biayaQc
+      properties:
+        baterai:
+          type: number
+          minimum: 0
+          maximum: 100
+          description: Battery health percentage
+        fisik:
+          type: string
+          enum:
+            - Mulus Like New
+            - Lecet Pemakaian Wajar
+            - Ada Dent/Sedikit Pecah
+        biayaQc:
+          type: number
+          minimum: 0
+          description: Parts/repair cost in IDR
+        appTambahan:
+          type: string
+          description: Extra apps beyond standard (optional)
+
+    JualInput:
+      type: object
+      required:
+        - hargaJual
+      properties:
+        hargaJual:
+          type: number
+          minimum: 0
+          description: Actual sale price in IDR
+
+    CaptionResult:
+      type: object
+      required:
+        - caption
+      properties:
+        caption:
+          type: string
+
+    DashboardStats:
+      type: object
+      required:
+        - totalModal
+        - totalUnitProses
+        - totalUnitReady
+        - totalUnitTerjual
+        - estimasiNilaiJual
+        - potensiProfit
+        - realisasiProfit
+        - recentUnits
+      properties:
+        totalModal:
+          type: number
+          description: Total capital invested in READY units (beli + QC)
+        totalUnitProses:
+          type: number
+          description: Units currently in QC process
+        totalUnitReady:
+          type: number
+          description: Units ready for sale
+        totalUnitTerjual:
+          type: number
+          description: Units sold
+        estimasiNilaiJual:
+          type: number
+          description: Estimated total sell value of READY units
+        potensiProfit:
+          type: number
+          description: Potential profit from READY units
+        realisasiProfit:
+          type: number
+          description: Realized profit from TERJUAL units
+        recentUnits:
+          type: array
+          description: Last 5 units added
+          items:
+            $ref: "#/components/schemas/Unit"
+
+    ErrorResponse:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: string

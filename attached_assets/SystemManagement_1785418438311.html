@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>INDO DUTA TECH - Premium Management</title>
+    
+    <style>
+        :root {
+            --dark: #1e293b;       
+            --gold: #d97706;       
+            --gold-hover: #b45309;
+            --bg: #f1f5f9;         
+            --card: #ffffff;
+            --text-main: #334155;  
+            --text-muted: #64748b; 
+            --border: #e2e8f0;
+            --success: #10b981;
+            --danger: #ef4444;
+            --danger-bg: #fee2e2;
+        }
+
+        /* Reset & Base System Font */
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body {
+            font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg);
+            color: var(--text-main);
+            margin: 0; padding: 0; padding-bottom: 90px;
+        }
+
+        /* Header App Bar */
+        .header {
+            background-color: var(--dark); color: white;
+            padding: 18px 20px; text-align: center;
+            position: sticky; top: 0; z-index: 999;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+        .header h2 { margin: 0; font-size: 1.4rem; font-weight: 800; letter-spacing: 1px; color: var(--gold); }
+        .header p { margin: 4px 0 0; font-size: 0.75rem; font-weight: 500; letter-spacing: 2px; color: #cbd5e1; }
+        
+        .container { padding: 15px; max-width: 600px; margin: 0 auto; }
+        
+        /* Navigasi Bawah */
+        .bottom-nav {
+            position: fixed; bottom: 0; left: 0; right: 0;
+            background: var(--card); display: flex; justify-content: space-between;
+            box-shadow: 0 -4px 15px rgba(0,0,0,0.05); 
+            padding: 10px 5px 15px 5px; z-index: 1000;
+            border-top: 1px solid var(--border);
+            max-width: 600px; margin: 0 auto;
+        }
+        .nav-item {
+            text-align: center; font-size: 0.75rem; color: var(--text-muted); 
+            cursor: pointer; flex: 1; 
+            display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 5px 0;
+        }
+        .nav-item.active { color: var(--gold); font-weight: 700; }
+        .nav-icon { font-size: 1.4rem; }
+        .nav-item.active .nav-icon { transform: scale(1.1); }
+
+        /* Pages */
+        .page { display: none; animation: fadeIn 0.2s ease-in; }
+        .page.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        
+        /* Cards & Forms */
+        .card {
+            background: var(--card); padding: 20px; border-radius: 12px; 
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04); margin-bottom: 20px; border: 1px solid var(--border);
+        }
+        .card h3 {
+            margin-top: 0; color: var(--dark); font-weight: 700; font-size: 1.1rem; 
+            border-bottom: 2px solid var(--bg); padding-bottom: 12px; margin-bottom: 15px;
+        }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 6px; font-weight: 600; font-size: 0.85rem; color: var(--dark); }
+        input, textarea, select {
+            width: 100%; padding: 12px; border: 1.5px solid var(--border);
+            border-radius: 8px; font-size: 0.95rem; color: var(--text-main);
+            background-color: #f8fafc; outline: none;
+        }
+        input:focus, textarea:focus, select:focus { border-color: var(--gold); background-color: #fff; }
+        
+        .checkbox-group {
+            display: flex; align-items: flex-start; margin-bottom: 10px; gap: 10px;
+            padding: 10px; border-radius: 8px; background: var(--bg);
+        }
+        .checkbox-group input { width: 22px; height: 22px; accent-color: var(--gold); margin-top:2px;}
+        .checkbox-group label { margin: 0; font-weight: 500; font-size: 0.9rem; line-height: 1.4;}
+        
+        /* Buttons */
+        button {
+            background-color: var(--dark); color: white; border: none; padding: 14px; width: 100%; 
+            border-radius: 8px; font-weight: 700; font-size: 1rem; cursor: pointer; margin-top: 10px;
+        }
+        button.btn-primary { background-color: var(--gold); color: white; }
+        button.btn-success { background-color: var(--success); }
+        button.btn-outline { background-color: transparent; border: 2px solid var(--border); color: var(--dark); }
+        button.btn-danger { background-color: var(--danger-bg); color: var(--danger); font-size: 1.2rem;}
+        
+        /* Lists & Badges */
+        .unit-item {
+            border-left: 4px solid var(--dark); background: var(--bg);
+            padding: 15px; margin-bottom: 12px; border-radius: 8px;
+        }
+        .unit-title { font-weight: 700; font-size: 1.05rem; color: var(--dark); margin-bottom: 5px;}
+        .badge {
+            display: inline-block; padding: 4px 10px; border-radius: 6px;
+            font-size: 0.75rem; font-weight: 700; color: white; margin-bottom: 8px;
+        }
+        .bg-proses { background: var(--dark); }
+        .bg-ready { background: var(--success); }
+        
+        /* Summary Box */
+        .summary-box { padding: 15px; border-radius: 8px; margin-bottom: 12px; color: white; }
+        .summary-box.dark { background: var(--dark); }
+        .summary-box.gold { background: var(--gold); }
+        .summary-box.green { background: var(--success); }
+        .summary-box p { margin: 0 0 5px 0; font-size: 0.85rem; opacity: 0.9; }
+        .summary-box h2 { margin: 0; font-size: 1.4rem; font-weight: 700; }
+        
+        /* Print Styles */
+        #printArea { display: none; }
+        @media print {
+            body { background: white; padding: 0; }
+            .bottom-nav, .header, .container { display: none !important; }
+            #printArea, #printArea * { visibility: visible; }
+            #printArea { display: block; position: absolute; left: 0; top: 0; width: 100%; padding: 0;}
+            .print-card { border: 2px solid #000; padding: 20px; text-align: center; border-radius: 12px; margin: 15px;}
+            .print-price { font-size: 2.5rem; font-weight: 800; margin: 15px 0; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h2>INDO DUTA TECH</h2>
+        <p>PREMIUM MANAGEMENT SYSTEM</p>
+    </div>
+
+    <div class="container">
+        <!-- MENU 1: BELI -->
+        <div id="page-beli" class="page active">
+            <div class="card">
+                <h3>📥 Input Unit Masuk</h3>
+                <form id="formBeli">
+                    <div class="form-group">
+                        <label>Merek & Tipe</label>
+                        <input type="text" id="inTipe" placeholder="Misal: Asus VivoBook 14" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Spesifikasi Bawaan</label>
+                        <textarea id="inSpek" rows="3" placeholder="Misal: Core i5 Gen 8, HDD 1TB" required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Minus Unit (Kondisi Awal)</label>
+                        <textarea id="inMinus" rows="2" placeholder="Misal: Speaker sember, lecet" required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Kelengkapan</label>
+                        <input type="text" id="inKelengkapan" placeholder="Misal: Unit + Charger" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Harga Beli (Rp)</label>
+                        <input type="number" id="inHargaBeli" placeholder="0" required>
+                    </div>
+                    <button type="submit" class="btn-primary">💾 Simpan ke Antrean QC</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- MENU 2: QC -->
+        <div id="page-qc" class="page">
+            <div class="card">
+                <h3>📋 Quality Control & Instalasi</h3>
+                <div id="listQcArea"></div>
+            </div>
+
+            <!-- Form QC Tersembunyi -->
+            <div id="formQcArea" class="card" style="display:none; border: 2px solid var(--gold);">
+                <h4 id="qcUnitName" style="color: var(--dark); margin-top:0; font-size:1.1rem;"></h4>
+                <div style="background:#fff3cd; padding:10px; border-radius:6px; margin-bottom:15px;">
+                    <p style="font-size:0.85rem; margin:0; color:#664d03;"><b>Minus Awal:</b> <span id="qcMinusText"></span></p>
+                </div>
+                
+                <form id="formQcSubmit">
+                    <input type="hidden" id="qcId">
+                    <div class="checkbox-group"><input type="checkbox" required><label>Speaker Jernih</label></div>
+                    <div class="checkbox-group"><input type="checkbox" required><label>Layar Aman (No Dead Pixel)</label></div>
+                    <div class="checkbox-group"><input type="checkbox" required><label>Wajib SSD Terpasang</label></div>
+                    <div class="checkbox-group"><input type="checkbox" required><label>Wajib RAM Min 8GB</label></div>
+                    <div class="checkbox-group"><input type="checkbox" required><label>Keyboard Semua OK</label></div>
+                    
+                    <div class="form-group" style="margin-top:20px; border-top: 1px dashed var(--border); padding-top:15px;">
+                        <label>Kesehatan Baterai (%)</label>
+                        <input type="number" id="qcBaterai" placeholder="Contoh: 85 (Isi angka saja)" min="0" max="100" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Instalasi Aplikasi</label>
+                        <div class="checkbox-group" style="margin-bottom:8px;">
+                            <input type="checkbox" id="qcAppStandar" required>
+                            <label>Sudah Instal Aplikasi Standar<br><small style="color:#64748b;">(Windows, Office, Browser, PDF, Zoom)</small></label>
+                        </div>
+                        <input type="text" id="qcAppTambahan" placeholder="Aplikasi Ekstra (Opsional, cth: Corel, Photoshop)">
+                    </div>
+
+                    <div class="form-group" style="margin-top:15px;">
+                        <label>Kondisi Fisik Final</label>
+                        <select id="qcFisik" required>
+                            <option value="">-- Pilih --</option>
+                            <option value="Mulus Like New">Mulus Like New</option>
+                            <option value="Lecet Pemakaian Wajar">Lecet Pemakaian Wajar</option>
+                            <option value="Ada Dent/Sedikit Pecah">Ada Dent/Sedikit Pecah</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Total Biaya Sparepart (Rp)</label>
+                        <input type="number" id="qcBiaya" placeholder="Isi 0 jika tidak ada modal tambahan" required>
+                    </div>
+                    
+                    <button type="submit" class="btn-primary">✔️ Lulus QC & Siap Jual</button>
+                    <button type="button" class="btn-outline" onclick="batalQc()">Batalkan</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- MENU 3: JUAL -->
+        <div id="page-jual" class="page">
+            <div class="card">
+                <h3>🏷️ Unit Siap Jual</h3>
+                <div id="listReadyArea"></div>
+            </div>
+        </div>
+
+        <!-- MENU 4: REKAP -->
+        <div id="page-laporan" class="page">
+            <div class="card">
+                <h3>📈 Rekap Keuangan</h3>
+                <div class="summary-box dark">
+                    <p>Modal Terpakai (Beli + QC)</p>
+                    <h2 id="lapModal">Rp 0</h2>
+                </div>
+                <div class="summary-box gold">
+                    <p>Estimasi Nilai Jual (+5%)</p>
+                    <h2 id="lapJual">Rp 0</h2>
+                </div>
+                <div class="summary-box green">
+                    <p>Potensi Profit Bersih</p>
+                    <h2 id="lapProfit">Rp 0</h2>
+                </div>
+            </div>
+        </div>
+
+        <!-- MENU 5: SOSMED -->
+        <div id="page-sosmed" class="page">
+            <div class="card">
+                <h3>📱 Copywriting Sosmed</h3>
+                <div class="form-group">
+                    <select id="sosmedSelect" onchange="generateCaption()">
+                        <option value="">-- Pilih Unit Siap Jual --</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <textarea id="sosmedResult" rows="14" readonly style="font-family: monospace; font-size:0.85rem; background:#f1f5f9;"></textarea>
+                </div>
+                <button type="button" class="btn-primary" onclick="copyCaption()">📋 Copy Teks Promosi</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- AREA CETAK -->
+    <div id="printArea">
+        <div class="print-card" id="printContent"></div>
+    </div>
+
+    <!-- Navigasi Bawah -->
+    <div class="bottom-nav">
+        <div class="nav-item active" onclick="navTo('page-beli', this)"><span class="nav-icon">📥</span><span>Beli</span></div>
+        <div class="nav-item" onclick="navTo('page-qc', this)"><span class="nav-icon">📋</span><span>QC</span></div>
+        <div class="nav-item" onclick="navTo('page-jual', this)"><span class="nav-icon">🏷️</span><span>Jual</span></div>
+        <div class="nav-item" onclick="navTo('page-laporan', this)"><span class="nav-icon">📈</span><span>Rekap</span></div>
+        <div class="nav-item" onclick="navTo('page-sosmed', this)"><span class="nav-icon">📱</span><span>Sosmed</span></div>
+    </div>
+
+    <script>
+        const formatRp = (angka) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(angka);
+        let db = JSON.parse(localStorage.getItem('idt_data')) || [];
+
+        function saveDB() {
+            localStorage.setItem('idt_data', JSON.stringify(db));
+            refreshSemuaView();
+        }
+
+        // FUNGSI HAPUS DATA
+        function hapusData(id) {
+            if(confirm('Yakin ingin menghapus unit ini dari sistem?')) {
+                db = db.filter(x => x.id !== id);
+                saveDB();
+            }
+        }
+
+        function navTo(pageId, elm) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            document.getElementById(pageId).classList.add('active');
+            elm.classList.add('active');
+            window.scrollTo(0, 0);
+            refreshSemuaView();
+        }
+
+        document.getElementById('formBeli').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const unit = {
+                id: Date.now(),
+                tipe: document.getElementById('inTipe').value,
+                spek: document.getElementById('inSpek').value,
+                minus: document.getElementById('inMinus').value,
+                kelengkapan: document.getElementById('inKelengkapan').value,
+                hargaBeli: parseFloat(document.getElementById('inHargaBeli').value),
+                biayaQc: 0, 
+                baterai: 0, 
+                appTambahan: '',
+                status: 'PROSES', fisik: ''
+            };
+            db.push(unit); saveDB(); this.reset();
+            alert('Sukses! Data masuk ke antrean QC.');
+        });
+
+        function renderQC() {
+            const list = document.getElementById('listQcArea'); list.innerHTML = '';
+            const unitProses = db.filter(u => u.status === 'PROSES');
+            if(unitProses.length === 0) list.innerHTML = '<p style="text-align:center; color:#64748b;">Semua unit sudah lolos QC.</p>';
+            
+            unitProses.forEach(u => {
+                list.innerHTML += `
+                    <div class="unit-item">
+                        <div class="badge bg-proses">Menunggu QC</div>
+                        <div class="unit-title">${u.tipe}</div>
+                        <p style="margin:5px 0; font-size:0.85rem;">Modal Beli: <b>${formatRp(u.hargaBeli)}</b></p>
+                        
+                        <!-- TOMBOL HAPUS DITAMBAHKAN DI SINI -->
+                        <div style="display:flex; gap:10px; margin-top:12px;">
+                            <button onclick="hapusData(${u.id})" class="btn-danger" style="flex:0.5; padding:10px;" title="Hapus Data">🗑️</button>
+                            <button onclick="bukaFormQC(${u.id})" class="btn-outline" style="flex:2; padding:10px;">Mulai Inspeksi</button>
+                        </div>
+                    </div>`;
+            });
+        }
+
+        function bukaFormQC(id) {
+            const u = db.find(x => x.id === id);
+            document.getElementById('qcId').value = u.id;
+            document.getElementById('qcUnitName').innerText = u.tipe;
+            document.getElementById('qcMinusText').innerText = u.minus;
+            document.getElementById('listQcArea').style.display = 'none';
+            document.getElementById('formQcArea').style.display = 'block';
+        }
+
+        function batalQc() {
+            document.getElementById('listQcArea').style.display = 'block';
+            document.getElementById('formQcArea').style.display = 'none';
+            document.getElementById('formQcSubmit').reset();
+        }
+
+        document.getElementById('formQcSubmit').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const id = parseInt(document.getElementById('qcId').value);
+            const idx = db.findIndex(x => x.id === id);
+            
+            db[idx].baterai = document.getElementById('qcBaterai').value;
+            db[idx].appTambahan = document.getElementById('qcAppTambahan').value;
+            db[idx].biayaQc = parseFloat(document.getElementById('qcBiaya').value) || 0;
+            db[idx].fisik = document.getElementById('qcFisik').value;
+            db[idx].status = 'READY';
+            
+            saveDB(); batalQc();
+            alert('Mantap! Unit telah lulus QC, Aplikasi terinstal, dan siap dijual.');
+        });
+
+        function renderSiapJual() {
+            const list = document.getElementById('listReadyArea');
+            const selectSosmed = document.getElementById('sosmedSelect');
+            list.innerHTML = ''; selectSosmed.innerHTML = '<option value="">-- Pilih Unit --</option>';
+            const unitReady = db.filter(u => u.status === 'READY');
+            if(unitReady.length === 0) list.innerHTML = '<p style="text-align:center; color:#64748b;">Belum ada unit siap jual.</p>';
+            
+            unitReady.forEach(u => {
+                const modal = u.hargaBeli + u.biayaQc;
+                const jual = modal + (modal * 0.05); 
+                list.innerHTML += `
+                    <div class="unit-item" style="border-left-color: var(--success);">
+                        <div class="badge bg-ready">Siap Jual</div>
+                        <div class="unit-title">${u.tipe}</div>
+                        <p style="margin:5px 0; font-size:0.8rem; color:var(--text-muted);">Baterai: ${u.baterai}% | Fisik: ${u.fisik}</p>
+                        <h4 style="margin:5px 0; color: var(--gold); font-size:1.2rem;">${formatRp(jual)}</h4>
+                        
+                        <!-- TOMBOL HAPUS DITAMBAHKAN DI SINI -->
+                        <div style="display:flex; gap:8px; margin-top:12px;">
+                            <button onclick="hapusData(${u.id})" class="btn-danger" style="flex:0.5; padding:10px;" title="Hapus Data">🗑️</button>
+                            <button onclick="cetakDisplay(${u.id}, ${jual})" class="btn-outline" style="flex:1; padding:10px;">🖨️ Cetak</button>
+                            <button onclick="tandaiTerjual(${u.id})" class="btn-success" style="flex:1; padding:10px;">Laku</button>
+                        </div>
+                    </div>`;
+                selectSosmed.innerHTML += `<option value="${u.id}">${u.tipe}</option>`;
+            });
+        }
+
+        function cetakDisplay(id, hargaJual) {
+            const u = db.find(x => x.id === id);
+            
+            let teksApp = "Windows, MS Office, Browser, Standar";
+            if(u.appTambahan) teksApp += `, ${u.appTambahan}`;
+            
+            document.getElementById('printContent').innerHTML = `
+                <h1 style="font-size:2rem; margin:0;">INDO DUTA TECH</h1>
+                <h2 style="border-bottom:2px solid #000; padding-bottom:10px;">${u.tipe.toUpperCase()}</h2>
+                <div style="text-align:left; font-size:1.1rem; line-height:1.6;">
+                    <b>Spesifikasi:</b><br>${u.spek.replace(/\n/g, '<br>')}<br><br>
+                    <b>Baterai:</b> Health ${u.baterai}% (Estimasi Awet)<br>
+                    <b>Software:</b> ${teksApp}<br>
+                    <b>Fisik:</b> ${u.fisik}<br>
+                    <b>Kelengkapan:</b> ${u.kelengkapan}
+                </div>
+                <div class="print-price">${formatRp(hargaJual)}</div>
+                <p>Tegalsari Barat V no 72, Semarang | WA: 082213002006</p>
+            `;
+            window.print();
+        }
+
+        function tandaiTerjual(id) {
+            if(confirm('Tandai unit laku terjual?')) {
+                db.find(x => x.id === id).status = 'TERJUAL'; saveDB();
+            }
+        }
+
+        function renderLaporan() {
+            let m = 0, j = 0;
+            db.filter(u => u.status === 'READY').forEach(u => {
+                let mod = u.hargaBeli + u.biayaQc;
+                m += mod; j += mod + (mod * 0.05);
+            });
+            document.getElementById('lapModal').innerText = formatRp(m);
+            document.getElementById('lapJual').innerText = formatRp(j);
+            document.getElementById('lapProfit').innerText = formatRp(j - m);
+        }
+
+        function generateCaption() {
+            const id = parseInt(document.getElementById('sosmedSelect').value);
+            if(!id) return document.getElementById('sosmedResult').value = '';
+            
+            const u = db.find(x => x.id === id);
+            const m = u.hargaBeli + u.biayaQc;
+            const h = formatRp(m + (m * 0.05));
+            
+            let teksApp = "Full Aplikasi (Windows, Office, dkk siap pakai!)";
+            if(u.appTambahan) teksApp += ` + ${u.appTambahan}`;
+            
+            document.getElementById('sosmedResult').value = 
+`💎 PREMIUM REFURBISHED LAPTOP 💎
+
+💻 ${u.tipe.toUpperCase()}
+
+⚙️ SPESIFIKASI GAHAR:
+${u.spek}
+✔️ Storage: SSD (Super Fast Booting)
+✔️ RAM: Standar 8GB (Lancar Multitasking)
+
+✨ KONDISI & QC PASING:
+- 100% Lulus Quality Control Ketat
+- Baterai: Health ${u.baterai}% (Awet, aman buat lembur)
+- Software: ${teksApp}
+- Fisik: ${u.fisik}
+- Kelengkapan: ${u.kelengkapan}
+
+💰 HARGA NETT: ${h}
+
+📍 INDO DUTA TECH
+🏠 Tegalsari Barat V No. 72, Semarang
+⏰ Buka Setiap Hari (Diskon up to 50%)
+📱 WA: 082213002006
+🌐 IG: @idtgrupsemarang`;
+        }
+
+        function copyCaption() {
+            const teks = document.getElementById('sosmedResult');
+            if(!teks.value) return alert('Pilih unit dulu!');
+            teks.select(); document.execCommand('copy');
+            alert('Teks promosi berhasil disalin!');
+        }
+
+        function refreshSemuaView() { renderQC(); renderSiapJual(); renderLaporan(); }
+        refreshSemuaView();
+    </script>
+</body>
+</html>
