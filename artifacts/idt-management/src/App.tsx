@@ -4,6 +4,7 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 import NotFound from '@/pages/not-found';
 import { Route, Switch, Router as WouterRouter, Redirect } from 'wouter';
 import { Shell } from '@/components/layout/shell';
+import { InstallPWA } from '@/components/InstallPWA';
 
 // Pages
 import Dashboard from '@/pages/dashboard';
@@ -43,6 +44,7 @@ function App() {
           <Router />
         </WouterRouter>
         <Toaster />
+        <InstallPWA />
       </TooltipProvider>
     </QueryClientProvider>
   );
