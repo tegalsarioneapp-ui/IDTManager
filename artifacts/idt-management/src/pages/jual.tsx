@@ -205,6 +205,8 @@ function SoldDialog({ unitId, onClose, units }: { unitId: number | null, onClose
   const modal = unit ? unit.hargaBeli + unit.biayaQc : 0;
   const estimasi = modal * 1.05;
   const [hargaJual, setHargaJual] = useState<number>(0);
+  const [namaPembeli, setNamaPembeli] = useState("");
+  const [nomorPembeli, setNomorPembeli] = useState("");
 
   // Initialize input when unit opens
   if (unit && hargaJual === 0) {
@@ -217,18 +219,21 @@ function SoldDialog({ unitId, onClose, units }: { unitId: number | null, onClose
     e.preventDefault();
     if (!unitId) return;
 
-    markSold.mutate({ id: unitId, data: { hargaJual } }, {
+    markSold.mutate({ id: unitId, data: { hargaJual, namaPembeli, nomorPembeli } }, {
       onSuccess: () => {
         toast({ title: "Selamat! Unit terjual 🎉", description: `Profit: ${formatRupiah(profit)}` });
         queryClient.invalidateQueries({ queryKey: getListUnitsQueryKey() });
         queryClient.invalidateQueries({ queryKey: getGetDashboardQueryKey() });
+        setNamaPembeli("");
+        setNomorPembeli("");
+        setHargaJual(0);
         onClose();
       }
     });
   };
 
   return (
-    <Dialog.Root open={!!unitId} onOpenChange={(open) => !open && onClose()}>
+    <Dialog.Root open={!!unitId} onOpenChange={(open) => { if (!open) { setNamaPembeli(""); setNomorPembeli(""); setHargaJual(0); onClose(); } }}>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 bg-background/80 backdrop-blur-sm z-40 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
         <Dialog.Content className="fixed left-[50%] top-[50%] z-50 w-full max-w-md translate-x-[-50%] translate-y-[-50%] bg-card border border-border p-6 rounded-2xl shadow-xl data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95">
@@ -236,11 +241,37 @@ function SoldDialog({ unitId, onClose, units }: { unitId: number | null, onClose
             <Zap className="w-5 h-5 text-emerald-500 fill-emerald-500" />
             Tandai Terjual
           </Dialog.Title>
-          <Dialog.Description className="text-muted-foreground text-sm mb-6">
-            Masukkan harga kesepakatan akhir (deal) untuk unit <span className="font-bold text-foreground">{unit?.tipe}</span>.
+          <Dialog.Description className="text-muted-foreground text-sm mb-4">
+            Isi data pembeli & harga deal untuk unit <span className="font-bold text-foreground">{unit?.tipe}</span>.
           </Dialog.Description>
 
           <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Buyer info */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Nama Pembeli</label>
+                <input
+                  type="text"
+                  value={namaPembeli}
+                  onChange={e => setNamaPembeli(e.target.value)}
+                  placeholder="Nama lengkap"
+                  required
+                  className="w-full bg-secondary border border-border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">No. HP / WA</label>
+                <input
+                  type="text"
+                  value={nomorPembeli}
+                  onChange={e => setNomorPembeli(e.target.value)}
+                  placeholder="08xxxxxxxxxx"
+                  required
+                  className="w-full bg-secondary border border-border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                />
+              </div>
+            </div>
+
             <div className="p-3 bg-secondary/50 rounded-lg flex justify-between items-center text-sm border border-border">
               <span className="text-muted-foreground">Total Modal (Beli + QC)</span>
               <span className="font-mono font-medium">{formatRupiah(modal)}</span>
@@ -257,7 +288,6 @@ function SoldDialog({ unitId, onClose, units }: { unitId: number | null, onClose
                   value={hargaJual}
                   onChange={(e) => setHargaJual(parseInt(e.target.value) || 0)}
                   className="w-full bg-secondary border border-border rounded-lg pl-10 pr-4 py-3 text-lg font-bold focus:outline-none focus:ring-2 focus:ring-primary/50 font-mono"
-                  autoFocus
                 />
               </div>
             </div>
@@ -273,7 +303,7 @@ function SoldDialog({ unitId, onClose, units }: { unitId: number | null, onClose
             <div className="flex gap-3 pt-2">
               <button 
                 type="button" 
-                onClick={onClose}
+                onClick={() => { setNamaPembeli(""); setNomorPembeli(""); setHargaJual(0); onClose(); }}
                 className="flex-1 px-4 py-3 bg-secondary hover:bg-secondary/80 text-foreground font-semibold rounded-xl transition-colors"
               >
                 Batal

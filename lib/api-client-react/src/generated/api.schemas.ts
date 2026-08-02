@@ -20,107 +20,103 @@ export const UnitStatus = {
 
 export interface Unit {
   id: number;
-  /** Brand and model name (e.g. Asus VivoBook 14) */
   tipe: string;
-  /** Hardware specifications */
   spek: string;
-  /** Initial condition issues */
   minus: string;
-  /** Accessories included */
   kelengkapan: string;
-  /** Purchase price in IDR */
   hargaBeli: number;
-  /** QC/parts cost in IDR */
   biayaQc: number;
-  /**
-     * Battery health percentage
-     * @nullable
-     */
   baterai?: number | null;
-  /**
-     * Extra software installed
-     * @nullable
-     */
   appTambahan?: string | null;
-  /**
-     * Physical condition after QC
-     * @nullable
-     */
   fisik?: string | null;
   status: UnitStatus;
-  /**
-     * Actual sale price in IDR
-     * @nullable
-     */
   hargaJual?: number | null;
-  /**
-     * Date sold
-     * @nullable
-     */
   tanggalJual?: string | null;
+  namaPembeli?: string | null;
+  nomorPembeli?: string | null;
   createdAt: string;
 }
 
 export interface UnitInput {
-  /** @minLength 1 */
   tipe: string;
-  /** @minLength 1 */
   spek: string;
-  /** @minLength 1 */
   minus: string;
-  /** @minLength 1 */
   kelengkapan: string;
-  /** @minimum 0 */
   hargaBeli: number;
 }
 
 export interface UnitUpdate {
-  /** @minLength 1 */
   tipe?: string;
-  /** @minLength 1 */
   spek?: string;
   minus?: string;
   kelengkapan?: string;
-  /** @minimum 0 */
   hargaBeli?: number;
 }
 
-export type QcInputFisik = typeof QcInputFisik[keyof typeof QcInputFisik];
-
-
-export const QcInputFisik = {
-  Mulus_Like_New: 'Mulus Like New',
-  Lecet_Pemakaian_Wajar: 'Lecet Pemakaian Wajar',
-  'Ada_Dent/Sedikit_Pecah': 'Ada Dent/Sedikit Pecah',
-} as const;
-
 export interface QcInput {
-  /**
-     * Battery health percentage
-     * @minimum 0
-     * @maximum 100
-     */
-  baterai: number;
-  fisik: QcInputFisik;
-  /**
-     * Parts/repair cost in IDR
-     * @minimum 0
-     */
   biayaQc: number;
-  /** Extra apps beyond standard (optional) */
-  appTambahan?: string;
+  fisik: string;
+  baterai: number;
+  appTambahan: string;
 }
 
 export interface JualInput {
-  /**
-     * Actual sale price in IDR
-     * @minimum 0
-     */
   hargaJual: number;
+  namaPembeli: string;
+  nomorPembeli: string;
 }
 
-export interface CaptionResult {
+export interface CaptionResponse {
   caption: string;
+}
+
+export interface StoreSettings {
+  id: number;
+  namaToko: string;
+  tagline: string;
+  alamat: string;
+  telepon: string;
+  email: string;
+  instagram: string;
+  facebook: string;
+  whatsapp: string;
+  tiktok: string;
+  website: string;
+  /** Base64 data URL of store logo */
+  logo: string;
+  updatedAt: string;
+}
+
+export interface InvoiceDocument {
+  nomorInvoice: string;
+  tanggal: string;
+  unit: Unit;
+  store: StoreSettings;
+  subtotal: number;
+  total: number;
+}
+
+export interface KuitansiDocument {
+  nomorKuitansi: string;
+  tanggal: string;
+  unit: Unit;
+  store: StoreSettings;
+  jumlah: number;
+  terbilang: string;
+}
+
+export interface StoreSettingsInput {
+  namaToko?: string;
+  tagline?: string;
+  alamat?: string;
+  telepon?: string;
+  email?: string;
+  instagram?: string;
+  facebook?: string;
+  whatsapp?: string;
+  tiktok?: string;
+  website?: string;
+  logo?: string;
 }
 
 export interface DashboardStats {

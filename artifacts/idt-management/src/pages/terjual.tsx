@@ -2,12 +2,16 @@ import { useState } from "react";
 import { useListUnits, useDeleteUnit, getListUnitsQueryKey, getGetDashboardQueryKey } from "@workspace/api-client-react";
 import { formatRupiah, formatDate, cn } from "@/lib/utils";
 import { useQueryClient } from "@tanstack/react-query";
-import { CheckCircle2, TrendingUp, CalendarDays, Wallet, Trash2 } from "lucide-react";
+import { CheckCircle2, TrendingUp, CalendarDays, Wallet, Trash2, FileText, Receipt } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { InvoicePrint } from "@/components/InvoicePrint";
+import { KuitansiPrint } from "@/components/KuitansiPrint";
 
 export default function TerjualList() {
   const { data: units, isLoading } = useListUnits({ status: "TERJUAL" });
   const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
+  const [invoiceUnitId, setInvoiceUnitId] = useState<number | null>(null);
+  const [kuitansiUnitId, setKuitansiUnitId] = useState<number | null>(null);
   const deleteUnit = useDeleteUnit();
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -111,6 +115,22 @@ export default function TerjualList() {
                     <div className="font-bold text-lg">{isProfit ? '+' : ''}{formatRupiah(profit)}</div>
                   </div>
 
+                  {/* Invoice & Kuitansi buttons */}
+                  <button
+                    onClick={() => setInvoiceUnitId(unit.id)}
+                    className="p-2 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-lg transition-colors"
+                    title="Cetak Invoice"
+                  >
+                    <FileText className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => setKuitansiUnitId(unit.id)}
+                    className="p-2 text-muted-foreground hover:text-emerald-500 hover:bg-emerald-500/10 rounded-lg transition-colors"
+                    title="Cetak Kuitansi"
+                  >
+                    <Receipt className="w-4 h-4" />
+                  </button>
+
                   {confirmDeleteId === unit.id ? (
                     <div className="flex items-center gap-1">
                       <button
@@ -143,6 +163,8 @@ export default function TerjualList() {
           })}
         </div>
       )}
+      <InvoicePrint unitId={invoiceUnitId} onClose={() => setInvoiceUnitId(null)} />
+      <KuitansiPrint unitId={kuitansiUnitId} onClose={() => setKuitansiUnitId(null)} />
     </div>
   );
 }

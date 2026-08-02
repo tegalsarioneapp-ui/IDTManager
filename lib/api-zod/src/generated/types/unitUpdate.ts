@@ -7,12 +7,9 @@
  */
 
 export interface UnitUpdate {
-  /** @minLength 1 */
   tipe?: string;
-  /** @minLength 1 */
   spek?: string;
   minus?: string;
   kelengkapan?: string;
-  /** @minimum 0 */
   hargaBeli?: number;
 }

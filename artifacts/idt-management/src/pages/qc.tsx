@@ -151,7 +151,7 @@ function QcForm({ id, onBack }: { id: number; onBack: () => void }) {
         baterai,
         fisik,
         biayaQc,
-        appTambahan: appTambahan || undefined
+        appTambahan: appTambahan || ""
       }
     }, {
       onSuccess: () => {

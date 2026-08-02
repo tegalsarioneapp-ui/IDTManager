@@ -14,6 +14,8 @@ tags:
     description: Laptop unit inventory management
   - name: dashboard
     description: Dashboard and analytics
+  - name: settings
+    description: Store settings and profile
 paths:
   /healthz:
     get:
@@ -161,7 +163,7 @@ paths:
               $ref: "#/components/schemas/QcInput"
       responses:
         "200":
-          description: QC completed, unit now READY
+          description: Unit updated
           content:
             application/json:
               schema:
@@ -177,7 +179,7 @@ paths:
     post:
       operationId: markSold
       tags: [units]
-      summary: Mark unit as TERJUAL (sold)
+      summary: Mark unit as sold (TERJUAL)
       parameters:
         - name: id
           in: path
@@ -192,7 +194,7 @@ paths:
               $ref: "#/components/schemas/JualInput"
       responses:
         "200":
-          description: Unit marked as sold
+          description: Unit sold
           content:
             application/json:
               schema:
@@ -208,7 +210,7 @@ paths:
     get:
       operationId: getUnitCaption
       tags: [units]
-      summary: Generate social media caption for a unit
+      summary: Get marketing caption for a unit
       parameters:
         - name: id
           in: path
@@ -217,11 +219,61 @@ paths:
             type: number
       responses:
         "200":
-          description: Generated caption
+          description: Caption text
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/CaptionResult"
+                $ref: "#/components/schemas/CaptionResponse"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /units/{id}/invoice:
+    get:
+      operationId: getUnitInvoice
+      tags: [units]
+      summary: Get invoice data for a sold unit
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      responses:
+        "200":
+          description: Invoice document data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InvoiceDocument"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /units/{id}/kuitansi:
+    get:
+      operationId: getUnitKuitansi
+      tags: [units]
+      summary: Get kuitansi (receipt) data for a sold unit
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      responses:
+        "200":
+          description: Kuitansi document data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/KuitansiDocument"
         "404":
           description: Not found
           content:
@@ -233,24 +285,58 @@ paths:
     get:
       operationId: getDashboard
       tags: [dashboard]
-      summary: Get dashboard summary stats
+      summary: Get dashboard statistics
       responses:
         "200":
-          description: Dashboard summary
+          description: Dashboard statistics
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/DashboardStats"
 
+  /settings:
+    get:
+      operationId: getSettings
+      tags: [settings]
+      summary: Get store settings
+      responses:
+        "200":
+          description: Store settings
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StoreSettings"
+    put:
+      operationId: updateSettings
+      tags: [settings]
+      summary: Update store settings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StoreSettingsInput"
+      responses:
+        "200":
+          description: Updated store settings
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StoreSettings"
+
 components:
   schemas:
     HealthStatus:
       type: object
+      required:
+        - status
       properties:
         status:
           type: string
-      required:
-        - status
+
+    UnitStatus:
+      type: string
+      enum: [PROSES, READY, TERJUAL]
 
     Unit:
       type: object
@@ -269,41 +355,40 @@ components:
           type: number
         tipe:
           type: string
-          description: Brand and model name (e.g. Asus VivoBook 14)
         spek:
           type: string
-          description: Hardware specifications
         minus:
           type: string
-          description: Initial condition issues
         kelengkapan:
           type: string
-          description: Accessories included
         hargaBeli:
           type: number
-          description: Purchase price in IDR
         biayaQc:
           type: number
-          description: QC/parts cost in IDR
         baterai:
-          type: ["number", "null"]
-          description: Battery health percentage
+          type: number
+          nullable: true
         appTambahan:
-          type: ["string", "null"]
-          description: Extra software installed
-        fisik:
-          type: ["string", "null"]
-          description: Physical condition after QC
-        status:
           type: string
-          enum: [PROSES, READY, TERJUAL]
+          nullable: true
+        fisik:
+          type: string
+          nullable: true
+        status:
+          $ref: "#/components/schemas/UnitStatus"
         hargaJual:
-          type: ["number", "null"]
-          description: Actual sale price in IDR
+          type: number
+          nullable: true
         tanggalJual:
-          type: ["string", "null"]
+          type: string
           format: date-time
-          description: Date sold
+          nullable: true
+        namaPembeli:
+          type: string
+          nullable: true
+        nomorPembeli:
+          type: string
+          nullable: true
         createdAt:
           type: string
           format: date-time
@@ -319,79 +404,186 @@ components:
       properties:
         tipe:
           type: string
-          minLength: 1
         spek:
           type: string
-          minLength: 1
         minus:
           type: string
-          minLength: 1
         kelengkapan:
           type: string
-          minLength: 1
         hargaBeli:
           type: number
-          minimum: 0
 
     UnitUpdate:
       type: object
       properties:
         tipe:
           type: string
-          minLength: 1
         spek:
           type: string
-          minLength: 1
         minus:
           type: string
         kelengkapan:
           type: string
         hargaBeli:
           type: number
-          minimum: 0
 
     QcInput:
       type: object
       required:
-        - baterai
-        - fisik
         - biayaQc
+        - fisik
+        - baterai
+        - appTambahan
       properties:
-        baterai:
-          type: number
-          minimum: 0
-          maximum: 100
-          description: Battery health percentage
-        fisik:
-          type: string
-          enum:
-            - Mulus Like New
-            - Lecet Pemakaian Wajar
-            - Ada Dent/Sedikit Pecah
         biayaQc:
           type: number
-          minimum: 0
-          description: Parts/repair cost in IDR
+        fisik:
+          type: string
+        baterai:
+          type: number
         appTambahan:
           type: string
-          description: Extra apps beyond standard (optional)
 
     JualInput:
       type: object
       required:
         - hargaJual
+        - namaPembeli
+        - nomorPembeli
       properties:
         hargaJual:
           type: number
-          minimum: 0
-          description: Actual sale price in IDR
+        namaPembeli:
+          type: string
+        nomorPembeli:
+          type: string
 
-    CaptionResult:
+    CaptionResponse:
       type: object
       required:
         - caption
       properties:
         caption:
+          type: string
+
+    InvoiceDocument:
+      type: object
+      required:
+        - nomorInvoice
+        - tanggal
+        - unit
+        - store
+        - subtotal
+        - total
+      properties:
+        nomorInvoice:
+          type: string
+        tanggal:
+          type: string
+          format: date-time
+        unit:
+          $ref: "#/components/schemas/Unit"
+        store:
+          $ref: "#/components/schemas/StoreSettings"
+        subtotal:
+          type: number
+        total:
+          type: number
+
+    KuitansiDocument:
+      type: object
+      required:
+        - nomorKuitansi
+        - tanggal
+        - unit
+        - store
+        - jumlah
+        - terbilang
+      properties:
+        nomorKuitansi:
+          type: string
+        tanggal:
+          type: string
+          format: date-time
+        unit:
+          $ref: "#/components/schemas/Unit"
+        store:
+          $ref: "#/components/schemas/StoreSettings"
+        jumlah:
+          type: number
+        terbilang:
+          type: string
+
+    StoreSettings:
+      type: object
+      required:
+        - id
+        - namaToko
+        - tagline
+        - alamat
+        - telepon
+        - email
+        - instagram
+        - facebook
+        - whatsapp
+        - tiktok
+        - website
+        - logo
+        - updatedAt
+      properties:
+        id:
+          type: number
+        namaToko:
+          type: string
+        tagline:
+          type: string
+        alamat:
+          type: string
+        telepon:
+          type: string
+        email:
+          type: string
+        instagram:
+          type: string
+        facebook:
+          type: string
+        whatsapp:
+          type: string
+        tiktok:
+          type: string
+        website:
+          type: string
+        logo:
+          type: string
+          description: Base64 data URL of store logo
+        updatedAt:
+          type: string
+          format: date-time
+
+    StoreSettingsInput:
+      type: object
+      properties:
+        namaToko:
+          type: string
+        tagline:
+          type: string
+        alamat:
+          type: string
+        telepon:
+          type: string
+        email:
+          type: string
+        instagram:
+          type: string
+        facebook:
+          type: string
+        whatsapp:
+          type: string
+        tiktok:
+          type: string
+        website:
+          type: string
+        logo:
           type: string
 
     DashboardStats:

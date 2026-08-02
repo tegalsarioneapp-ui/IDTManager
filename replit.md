@@ -4,12 +4,15 @@ An internal management app for buying, quality-checking, selling, and reporting 
 
 ## Run & Operate
 
-- `pnpm --filter @workspace/api-server run dev` — run the API server (port 5000)
+- **Frontend** (`artifacts/idt-management`): managed workflow `artifacts/idt-management: web` — React + Vite, served at `/`
+- **API Server** (`artifacts/api-server`): managed workflow `artifacts/api-server: API Server` — Express 5, served at `/api`
+- `pnpm install` — install all workspace dependencies (run after pulling changes)
 - `pnpm run typecheck` — full typecheck across all packages
 - `pnpm run build` — typecheck + build all packages
 - `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from the OpenAPI spec
-- `pnpm --filter @workspace/db run push` — push DB schema changes (dev only)
-- Required env: `DATABASE_URL` — Postgres connection string
+- `pnpm --filter @workspace/db run push` — push DB schema changes to development database (dev only)
+- `DATABASE_URL` is auto-managed by Replit — do not set it manually
+- `SESSION_SECRET` — set as a Replit Secret
 
 ## Stack
 

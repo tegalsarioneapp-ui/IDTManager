@@ -20,13 +20,17 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
-  CaptionResult,
+  CaptionResponse,
   DashboardStats,
   ErrorResponse,
   HealthStatus,
+  InvoiceDocument,
   JualInput,
+  KuitansiDocument,
   ListUnitsParams,
   QcInput,
+  StoreSettings,
+  StoreSettingsInput,
   Unit,
   UnitInput,
   UnitUpdate
@@ -593,7 +597,7 @@ export const getMarkSoldUrl = (id: number,) => {
 }
 
 /**
- * @summary Mark unit as TERJUAL (sold)
+ * @summary Mark unit as sold (TERJUAL)
  */
 export const markSold = async (id: number,
     jualInput: JualInput, options?: Parameters<typeof customFetch>[1]): Promise<Unit> => {
@@ -643,7 +647,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type MarkSoldMutationError = ErrorType<ErrorResponse>
 
     /**
- * @summary Mark unit as TERJUAL (sold)
+ * @summary Mark unit as sold (TERJUAL)
  */
 export const useMarkSold = <TError = ErrorType<ErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof markSold>>, TError,{id: number;data: BodyType<JualInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
@@ -665,11 +669,11 @@ export const getGetUnitCaptionUrl = (id: number,) => {
 }
 
 /**
- * @summary Generate social media caption for a unit
+ * @summary Get marketing caption for a unit
  */
-export const getUnitCaption = async (id: number, options?: Parameters<typeof customFetch>[1]): Promise<CaptionResult> => {
+export const getUnitCaption = async (id: number, options?: Parameters<typeof customFetch>[1]): Promise<CaptionResponse> => {
 
-  return customFetch<CaptionResult>(getGetUnitCaptionUrl(id),
+  return customFetch<CaptionResponse>(getGetUnitCaptionUrl(id),
   {
     ...options,
     method: 'GET'
@@ -712,7 +716,7 @@ export type GetUnitCaptionQueryError = ErrorType<ErrorResponse>
 
 
 /**
- * @summary Generate social media caption for a unit
+ * @summary Get marketing caption for a unit
  */
 
 export function useGetUnitCaption<TData = Awaited<ReturnType<typeof getUnitCaption>>, TError = ErrorType<ErrorResponse>>(
@@ -721,6 +725,160 @@ export function useGetUnitCaption<TData = Awaited<ReturnType<typeof getUnitCapti
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
 
   const queryOptions = getGetUnitCaptionQueryOptions(id,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getGetUnitInvoiceUrl = (id: number,) => {
+
+
+
+
+  return `/api/units/${id}/invoice`
+}
+
+/**
+ * @summary Get invoice data for a sold unit
+ */
+export const getUnitInvoice = async (id: number, options?: Parameters<typeof customFetch>[1]): Promise<InvoiceDocument> => {
+
+  return customFetch<InvoiceDocument>(getGetUnitInvoiceUrl(id),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetUnitInvoiceQueryKey = (id: number,) => {
+    return [
+    `/api/units/${id}/invoice`
+    ] as const;
+    }
+
+
+export const getGetUnitInvoiceQueryOptions = <TData = Awaited<ReturnType<typeof getUnitInvoice>>, TError = ErrorType<ErrorResponse>>(id: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getUnitInvoice>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetUnitInvoiceQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getUnitInvoice>>> = ({ signal }) => getUnitInvoice(id, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getUnitInvoice>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetUnitInvoiceQueryResult = NonNullable<Awaited<ReturnType<typeof getUnitInvoice>>>
+export type GetUnitInvoiceQueryError = ErrorType<ErrorResponse>
+
+
+/**
+ * @summary Get invoice data for a sold unit
+ */
+
+export function useGetUnitInvoice<TData = Awaited<ReturnType<typeof getUnitInvoice>>, TError = ErrorType<ErrorResponse>>(
+ id: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getUnitInvoice>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetUnitInvoiceQueryOptions(id,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getGetUnitKuitansiUrl = (id: number,) => {
+
+
+
+
+  return `/api/units/${id}/kuitansi`
+}
+
+/**
+ * @summary Get kuitansi (receipt) data for a sold unit
+ */
+export const getUnitKuitansi = async (id: number, options?: Parameters<typeof customFetch>[1]): Promise<KuitansiDocument> => {
+
+  return customFetch<KuitansiDocument>(getGetUnitKuitansiUrl(id),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetUnitKuitansiQueryKey = (id: number,) => {
+    return [
+    `/api/units/${id}/kuitansi`
+    ] as const;
+    }
+
+
+export const getGetUnitKuitansiQueryOptions = <TData = Awaited<ReturnType<typeof getUnitKuitansi>>, TError = ErrorType<ErrorResponse>>(id: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getUnitKuitansi>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetUnitKuitansiQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getUnitKuitansi>>> = ({ signal }) => getUnitKuitansi(id, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getUnitKuitansi>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetUnitKuitansiQueryResult = NonNullable<Awaited<ReturnType<typeof getUnitKuitansi>>>
+export type GetUnitKuitansiQueryError = ErrorType<ErrorResponse>
+
+
+/**
+ * @summary Get kuitansi (receipt) data for a sold unit
+ */
+
+export function useGetUnitKuitansi<TData = Awaited<ReturnType<typeof getUnitKuitansi>>, TError = ErrorType<ErrorResponse>>(
+ id: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getUnitKuitansi>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetUnitKuitansiQueryOptions(id,options)
 
   const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
 
@@ -742,7 +900,7 @@ export const getGetDashboardUrl = () => {
 }
 
 /**
- * @summary Get dashboard summary stats
+ * @summary Get dashboard statistics
  */
 export const getDashboard = async ( options?: Parameters<typeof customFetch>[1]): Promise<DashboardStats> => {
 
@@ -789,7 +947,7 @@ export type GetDashboardQueryError = ErrorType<unknown>
 
 
 /**
- * @summary Get dashboard summary stats
+ * @summary Get dashboard statistics
  */
 
 export function useGetDashboard<TData = Awaited<ReturnType<typeof getDashboard>>, TError = ErrorType<unknown>>(
@@ -809,4 +967,152 @@ export function useGetDashboard<TData = Awaited<ReturnType<typeof getDashboard>>
 
 
 
+
+export const getGetSettingsUrl = () => {
+
+
+
+
+  return `/api/settings`
+}
+
+/**
+ * @summary Get store settings
+ */
+export const getSettings = async ( options?: Parameters<typeof customFetch>[1]): Promise<StoreSettings> => {
+
+  return customFetch<StoreSettings>(getGetSettingsUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetSettingsQueryKey = () => {
+    return [
+    `/api/settings`
+    ] as const;
+    }
+
+
+export const getGetSettingsQueryOptions = <TData = Awaited<ReturnType<typeof getSettings>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getSettings>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetSettingsQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getSettings>>> = ({ signal }) => getSettings({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getSettings>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetSettingsQueryResult = NonNullable<Awaited<ReturnType<typeof getSettings>>>
+export type GetSettingsQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Get store settings
+ */
+
+export function useGetSettings<TData = Awaited<ReturnType<typeof getSettings>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getSettings>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetSettingsQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getUpdateSettingsUrl = () => {
+
+
+
+
+  return `/api/settings`
+}
+
+/**
+ * @summary Update store settings
+ */
+export const updateSettings = async (storeSettingsInput: StoreSettingsInput, options?: Parameters<typeof customFetch>[1]): Promise<StoreSettings> => {
+
+  return customFetch<StoreSettings>(getUpdateSettingsUrl(),
+  {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(storeSettingsInput)
+  }
+);}
+
+
+
+
+
+export const getUpdateSettingsMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateSettings>>, TError,{data: BodyType<StoreSettingsInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateSettings>>, TError,{data: BodyType<StoreSettingsInput>}, TContext> => {
+
+const mutationKey = ['updateSettings'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateSettings>>, {data: BodyType<StoreSettingsInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  updateSettings(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateSettingsMutationResult = NonNullable<Awaited<ReturnType<typeof updateSettings>>>
+    export type UpdateSettingsMutationBody = BodyType<StoreSettingsInput>
+    export type UpdateSettingsMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Update store settings
+ */
+export const useUpdateSettings = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateSettings>>, TError,{data: BodyType<StoreSettingsInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof updateSettings>>,
+        TError,
+        {data: BodyType<StoreSettingsInput>},
+        TContext
+      > => {
+      return useMutation(getUpdateSettingsMutationOptions(options));
+    }
 

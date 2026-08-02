@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
 import { eq, desc, inArray } from "drizzle-orm";
-import { db, unitsTable } from "@workspace/db";
+import { db, unitsTable, storeSettingsTable } from "@workspace/db";
 import {
   ListUnitsQueryParams,
   CreateUnitBody,
@@ -19,6 +19,10 @@ import {
   MarkSoldResponse,
   GetUnitCaptionParams,
   GetUnitCaptionResponse,
+  GetUnitInvoiceParams,
+  GetUnitInvoiceResponse,
+  GetUnitKuitansiParams,
+  GetUnitKuitansiResponse,
   GetDashboardResponse,
   ListUnitsResponse,
 } from "@workspace/api-zod";
@@ -200,6 +204,8 @@ router.post("/units/:id/jual", async (req, res): Promise<void> => {
     .update(unitsTable)
     .set({
       hargaJual: parsed.data.hargaJual,
+      namaPembeli: parsed.data.namaPembeli,
+      nomorPembeli: parsed.data.nomorPembeli,
       status: "TERJUAL",
       tanggalJual: new Date(),
     })
@@ -270,6 +276,86 @@ ${unit.spek}
 \u{1F310} IG: @idtgrupsemarang`;
 
   res.json(GetUnitCaptionResponse.parse({ caption }));
+});
+
+// Helper: Indonesian number-to-words
+function terbilang(n: number): string {
+  const satuan = ["", "satu", "dua", "tiga", "empat", "lima", "enam", "tujuh", "delapan", "sembilan",
+    "sepuluh", "sebelas", "dua belas", "tiga belas", "empat belas", "lima belas", "enam belas",
+    "tujuh belas", "delapan belas", "sembilan belas"];
+  if (n < 20) return satuan[n];
+  if (n < 100) return satuan[Math.floor(n / 10) * 10 - n % 10 === 0 ? 0 : Math.floor(n / 10)] + (n % 10 !== 0 ? " " + satuan[n % 10] : "");
+  if (n < 100) {
+    const tens = ["", "", "dua puluh", "tiga puluh", "empat puluh", "lima puluh",
+      "enam puluh", "tujuh puluh", "delapan puluh", "sembilan puluh"];
+    return tens[Math.floor(n / 10)] + (n % 10 !== 0 ? " " + satuan[n % 10] : "");
+  }
+  if (n < 200) return "seratus" + (n % 100 !== 0 ? " " + terbilang(n % 100) : "");
+  if (n < 1000) return satuan[Math.floor(n / 100)] + " ratus" + (n % 100 !== 0 ? " " + terbilang(n % 100) : "");
+  if (n < 2000) return "seribu" + (n % 1000 !== 0 ? " " + terbilang(n % 1000) : "");
+  if (n < 1_000_000) return terbilang(Math.floor(n / 1000)) + " ribu" + (n % 1000 !== 0 ? " " + terbilang(n % 1000) : "");
+  if (n < 1_000_000_000) return terbilang(Math.floor(n / 1_000_000)) + " juta" + (n % 1_000_000 !== 0 ? " " + terbilang(n % 1_000_000) : "");
+  return terbilang(Math.floor(n / 1_000_000_000)) + " miliar" + (n % 1_000_000_000 !== 0 ? " " + terbilang(n % 1_000_000_000) : "");
+}
+
+async function getOrCreateSettings() {
+  const [s] = await db.select().from(storeSettingsTable).where(eq(storeSettingsTable.id, 1));
+  if (s) return s;
+  const [created] = await db.insert(storeSettingsTable).values({
+    namaToko: "INDO DUTA TECH", tagline: "Premium Reseller",
+    alamat: "", telepon: "", email: "", instagram: "", facebook: "",
+    whatsapp: "", tiktok: "", website: "", logo: "",
+  }).returning();
+  return created;
+}
+
+// GET /units/:id/invoice
+router.get("/units/:id/invoice", async (req, res): Promise<void> => {
+  const raw = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+  const params = GetUnitInvoiceParams.safeParse({ id: parseFloat(raw) });
+  if (!params.success) { res.status(400).json({ error: params.error.message }); return; }
+
+  const [unit] = await db.select().from(unitsTable).where(eq(unitsTable.id, params.data.id));
+  if (!unit) { res.status(404).json({ error: "Unit not found" }); return; }
+
+  const store = await getOrCreateSettings();
+  const tanggal = unit.tanggalJual ?? unit.createdAt;
+  const pad = (v: number) => String(v).padStart(3, "0");
+  const nomorInvoice = `INV/${tanggal.getFullYear()}/${String(tanggal.getMonth() + 1).padStart(2, "0")}/${pad(unit.id)}`;
+
+  res.json(GetUnitInvoiceResponse.parse({
+    nomorInvoice,
+    tanggal: tanggal.toISOString(),
+    unit,
+    store,
+    subtotal: unit.hargaJual ?? 0,
+    total: unit.hargaJual ?? 0,
+  }));
+});
+
+// GET /units/:id/kuitansi
+router.get("/units/:id/kuitansi", async (req, res): Promise<void> => {
+  const raw = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+  const params = GetUnitKuitansiParams.safeParse({ id: parseFloat(raw) });
+  if (!params.success) { res.status(400).json({ error: params.error.message }); return; }
+
+  const [unit] = await db.select().from(unitsTable).where(eq(unitsTable.id, params.data.id));
+  if (!unit) { res.status(404).json({ error: "Unit not found" }); return; }
+
+  const store = await getOrCreateSettings();
+  const tanggal = unit.tanggalJual ?? unit.createdAt;
+  const pad = (v: number) => String(v).padStart(3, "0");
+  const nomorKuitansi = `KWT/${tanggal.getFullYear()}/${String(tanggal.getMonth() + 1).padStart(2, "0")}/${pad(unit.id)}`;
+  const jumlah = unit.hargaJual ?? 0;
+
+  res.json(GetUnitKuitansiResponse.parse({
+    nomorKuitansi,
+    tanggal: tanggal.toISOString(),
+    unit,
+    store,
+    jumlah,
+    terbilang: terbilang(jumlah) + " rupiah",
+  }));
 });
 
 // GET /dashboard

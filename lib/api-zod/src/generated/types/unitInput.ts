@@ -7,14 +7,9 @@
  */
 
 export interface UnitInput {
-  /** @minLength 1 */
   tipe: string;
-  /** @minLength 1 */
   spek: string;
-  /** @minLength 1 */
   minus: string;
-  /** @minLength 1 */
   kelengkapan: string;
-  /** @minimum 0 */
   hargaBeli: number;
 }

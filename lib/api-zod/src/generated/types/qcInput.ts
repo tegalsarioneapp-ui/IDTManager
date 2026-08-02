@@ -5,21 +5,10 @@
  * INDO DUTA TECH - Premium Management System API
  * OpenAPI spec version: 0.1.0
  */
-import type { QcInputFisik } from './qcInputFisik';
 
 export interface QcInput {
-  /**
-     * Battery health percentage
-     * @minimum 0
-     * @maximum 100
-     */
-  baterai: number;
-  fisik: QcInputFisik;
-  /**
-     * Parts/repair cost in IDR
-     * @minimum 0
-     */
   biayaQc: number;
-  /** Extra apps beyond standard (optional) */
-  appTambahan?: string;
+  fisik: string;
+  baterai: number;
+  appTambahan: string;
 }

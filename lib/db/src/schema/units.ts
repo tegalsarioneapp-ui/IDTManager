@@ -18,6 +18,8 @@ export const unitsTable = pgTable("units", {
   status: unitStatusEnum("status").notNull().default("PROSES"),
   hargaJual: integer("harga_jual"),
   tanggalJual: timestamp("tanggal_jual"),
+  namaPembeli: text("nama_pembeli"),
+  nomorPembeli: text("nomor_pembeli"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 

@@ -6,7 +6,8 @@ import {
   Tags, 
   CheckCircle2, 
   PieChart, 
-  Share2
+  Share2,
+  Settings
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useListUnits } from "@workspace/api-client-react";
@@ -25,6 +26,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
     { href: "/terjual", label: "Terjual", icon: CheckCircle2 },
     { href: "/laporan", label: "Laporan", icon: PieChart },
     { href: "/sosmed", label: "Sosmed", icon: Share2 },
+    { href: "/settings", label: "Setting", icon: Settings },
   ];
 
   return (

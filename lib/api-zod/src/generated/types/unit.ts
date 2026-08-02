@@ -9,43 +9,19 @@ import type { UnitStatus } from './unitStatus';
 
 export interface Unit {
   id: number;
-  /** Brand and model name (e.g. Asus VivoBook 14) */
   tipe: string;
-  /** Hardware specifications */
   spek: string;
-  /** Initial condition issues */
   minus: string;
-  /** Accessories included */
   kelengkapan: string;
-  /** Purchase price in IDR */
   hargaBeli: number;
-  /** QC/parts cost in IDR */
   biayaQc: number;
-  /**
-     * Battery health percentage
-     * @nullable
-     */
   baterai?: number | null;
-  /**
-     * Extra software installed
-     * @nullable
-     */
   appTambahan?: string | null;
-  /**
-     * Physical condition after QC
-     * @nullable
-     */
   fisik?: string | null;
   status: UnitStatus;
-  /**
-     * Actual sale price in IDR
-     * @nullable
-     */
   hargaJual?: number | null;
-  /**
-     * Date sold
-     * @nullable
-     */
   tanggalJual?: Date | null;
+  namaPembeli?: string | null;
+  nomorPembeli?: string | null;
   createdAt: Date;
 }

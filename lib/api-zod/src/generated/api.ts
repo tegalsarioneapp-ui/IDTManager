@@ -26,18 +26,20 @@ export const ListUnitsQueryParams = zod.object({
 
 export const ListUnitsResponseItem = zod.object({
   "id": zod.number(),
-  "tipe": zod.string().describe('Brand and model name (e.g. Asus VivoBook 14)'),
-  "spek": zod.string().describe('Hardware specifications'),
-  "minus": zod.string().describe('Initial condition issues'),
-  "kelengkapan": zod.string().describe('Accessories included'),
-  "hargaBeli": zod.number().describe('Purchase price in IDR'),
-  "biayaQc": zod.number().describe('QC\/parts cost in IDR'),
-  "baterai": zod.number().nullish().describe('Battery health percentage'),
-  "appTambahan": zod.string().nullish().describe('Extra software installed'),
-  "fisik": zod.string().nullish().describe('Physical condition after QC'),
+  "tipe": zod.string(),
+  "spek": zod.string(),
+  "minus": zod.string(),
+  "kelengkapan": zod.string(),
+  "hargaBeli": zod.number(),
+  "biayaQc": zod.number(),
+  "baterai": zod.number().nullish(),
+  "appTambahan": zod.string().nullish(),
+  "fisik": zod.string().nullish(),
   "status": zod.enum(['PROSES', 'READY', 'TERJUAL']),
-  "hargaJual": zod.number().nullish().describe('Actual sale price in IDR'),
-  "tanggalJual": zod.coerce.date().nullish().describe('Date sold'),
+  "hargaJual": zod.number().nullish(),
+  "tanggalJual": zod.coerce.date().nullish(),
+  "namaPembeli": zod.string().nullish(),
+  "nomorPembeli": zod.string().nullish(),
   "createdAt": zod.coerce.date()
 })
 export const ListUnitsResponse = zod.array(ListUnitsResponseItem)
@@ -46,36 +48,30 @@ export const ListUnitsResponse = zod.array(ListUnitsResponseItem)
 /**
  * @summary Create a new unit (Beli)
  */
-
-
-
-
-export const createUnitBodyHargaBeliMin = 0;
-
-
-
 export const CreateUnitBody = zod.object({
-  "tipe": zod.string().min(1),
-  "spek": zod.string().min(1),
-  "minus": zod.string().min(1),
-  "kelengkapan": zod.string().min(1),
-  "hargaBeli": zod.number().min(createUnitBodyHargaBeliMin)
+  "tipe": zod.string(),
+  "spek": zod.string(),
+  "minus": zod.string(),
+  "kelengkapan": zod.string(),
+  "hargaBeli": zod.number()
 })
 
 export const CreateUnitResponse = zod.object({
   "id": zod.number(),
-  "tipe": zod.string().describe('Brand and model name (e.g. Asus VivoBook 14)'),
-  "spek": zod.string().describe('Hardware specifications'),
-  "minus": zod.string().describe('Initial condition issues'),
-  "kelengkapan": zod.string().describe('Accessories included'),
-  "hargaBeli": zod.number().describe('Purchase price in IDR'),
-  "biayaQc": zod.number().describe('QC\/parts cost in IDR'),
-  "baterai": zod.number().nullish().describe('Battery health percentage'),
-  "appTambahan": zod.string().nullish().describe('Extra software installed'),
-  "fisik": zod.string().nullish().describe('Physical condition after QC'),
+  "tipe": zod.string(),
+  "spek": zod.string(),
+  "minus": zod.string(),
+  "kelengkapan": zod.string(),
+  "hargaBeli": zod.number(),
+  "biayaQc": zod.number(),
+  "baterai": zod.number().nullish(),
+  "appTambahan": zod.string().nullish(),
+  "fisik": zod.string().nullish(),
   "status": zod.enum(['PROSES', 'READY', 'TERJUAL']),
-  "hargaJual": zod.number().nullish().describe('Actual sale price in IDR'),
-  "tanggalJual": zod.coerce.date().nullish().describe('Date sold'),
+  "hargaJual": zod.number().nullish(),
+  "tanggalJual": zod.coerce.date().nullish(),
+  "namaPembeli": zod.string().nullish(),
+  "nomorPembeli": zod.string().nullish(),
   "createdAt": zod.coerce.date()
 })
 
@@ -89,18 +85,20 @@ export const GetUnitParams = zod.object({
 
 export const GetUnitResponse = zod.object({
   "id": zod.number(),
-  "tipe": zod.string().describe('Brand and model name (e.g. Asus VivoBook 14)'),
-  "spek": zod.string().describe('Hardware specifications'),
-  "minus": zod.string().describe('Initial condition issues'),
-  "kelengkapan": zod.string().describe('Accessories included'),
-  "hargaBeli": zod.number().describe('Purchase price in IDR'),
-  "biayaQc": zod.number().describe('QC\/parts cost in IDR'),
-  "baterai": zod.number().nullish().describe('Battery health percentage'),
-  "appTambahan": zod.string().nullish().describe('Extra software installed'),
-  "fisik": zod.string().nullish().describe('Physical condition after QC'),
+  "tipe": zod.string(),
+  "spek": zod.string(),
+  "minus": zod.string(),
+  "kelengkapan": zod.string(),
+  "hargaBeli": zod.number(),
+  "biayaQc": zod.number(),
+  "baterai": zod.number().nullish(),
+  "appTambahan": zod.string().nullish(),
+  "fisik": zod.string().nullish(),
   "status": zod.enum(['PROSES', 'READY', 'TERJUAL']),
-  "hargaJual": zod.number().nullish().describe('Actual sale price in IDR'),
-  "tanggalJual": zod.coerce.date().nullish().describe('Date sold'),
+  "hargaJual": zod.number().nullish(),
+  "tanggalJual": zod.coerce.date().nullish(),
+  "namaPembeli": zod.string().nullish(),
+  "nomorPembeli": zod.string().nullish(),
   "createdAt": zod.coerce.date()
 })
 
@@ -112,34 +110,30 @@ export const UpdateUnitParams = zod.object({
   "id": zod.coerce.number()
 })
 
-
-
-export const updateUnitBodyHargaBeliMin = 0;
-
-
-
 export const UpdateUnitBody = zod.object({
-  "tipe": zod.string().min(1).optional(),
-  "spek": zod.string().min(1).optional(),
+  "tipe": zod.string().optional(),
+  "spek": zod.string().optional(),
   "minus": zod.string().optional(),
   "kelengkapan": zod.string().optional(),
-  "hargaBeli": zod.number().min(updateUnitBodyHargaBeliMin).optional()
+  "hargaBeli": zod.number().optional()
 })
 
 export const UpdateUnitResponse = zod.object({
   "id": zod.number(),
-  "tipe": zod.string().describe('Brand and model name (e.g. Asus VivoBook 14)'),
-  "spek": zod.string().describe('Hardware specifications'),
-  "minus": zod.string().describe('Initial condition issues'),
-  "kelengkapan": zod.string().describe('Accessories included'),
-  "hargaBeli": zod.number().describe('Purchase price in IDR'),
-  "biayaQc": zod.number().describe('QC\/parts cost in IDR'),
-  "baterai": zod.number().nullish().describe('Battery health percentage'),
-  "appTambahan": zod.string().nullish().describe('Extra software installed'),
-  "fisik": zod.string().nullish().describe('Physical condition after QC'),
+  "tipe": zod.string(),
+  "spek": zod.string(),
+  "minus": zod.string(),
+  "kelengkapan": zod.string(),
+  "hargaBeli": zod.number(),
+  "biayaQc": zod.number(),
+  "baterai": zod.number().nullish(),
+  "appTambahan": zod.string().nullish(),
+  "fisik": zod.string().nullish(),
   "status": zod.enum(['PROSES', 'READY', 'TERJUAL']),
-  "hargaJual": zod.number().nullish().describe('Actual sale price in IDR'),
-  "tanggalJual": zod.coerce.date().nullish().describe('Date sold'),
+  "hargaJual": zod.number().nullish(),
+  "tanggalJual": zod.coerce.date().nullish(),
+  "namaPembeli": zod.string().nullish(),
+  "nomorPembeli": zod.string().nullish(),
   "createdAt": zod.coerce.date()
 })
 
@@ -161,73 +155,68 @@ export const CompleteQcParams = zod.object({
   "id": zod.coerce.number()
 })
 
-export const completeQcBodyBateraiMin = 0;
-export const completeQcBodyBateraiMax = 100;
-
-export const completeQcBodyBiayaQcMin = 0;
-
-
-
 export const CompleteQcBody = zod.object({
-  "baterai": zod.number().min(completeQcBodyBateraiMin).max(completeQcBodyBateraiMax).describe('Battery health percentage'),
-  "fisik": zod.enum(['Mulus Like New', 'Lecet Pemakaian Wajar', 'Ada Dent/Sedikit Pecah']),
-  "biayaQc": zod.number().min(completeQcBodyBiayaQcMin).describe('Parts\/repair cost in IDR'),
-  "appTambahan": zod.string().optional().describe('Extra apps beyond standard (optional)')
+  "biayaQc": zod.number(),
+  "fisik": zod.string(),
+  "baterai": zod.number(),
+  "appTambahan": zod.string()
 })
 
 export const CompleteQcResponse = zod.object({
   "id": zod.number(),
-  "tipe": zod.string().describe('Brand and model name (e.g. Asus VivoBook 14)'),
-  "spek": zod.string().describe('Hardware specifications'),
-  "minus": zod.string().describe('Initial condition issues'),
-  "kelengkapan": zod.string().describe('Accessories included'),
-  "hargaBeli": zod.number().describe('Purchase price in IDR'),
-  "biayaQc": zod.number().describe('QC\/parts cost in IDR'),
-  "baterai": zod.number().nullish().describe('Battery health percentage'),
-  "appTambahan": zod.string().nullish().describe('Extra software installed'),
-  "fisik": zod.string().nullish().describe('Physical condition after QC'),
+  "tipe": zod.string(),
+  "spek": zod.string(),
+  "minus": zod.string(),
+  "kelengkapan": zod.string(),
+  "hargaBeli": zod.number(),
+  "biayaQc": zod.number(),
+  "baterai": zod.number().nullish(),
+  "appTambahan": zod.string().nullish(),
+  "fisik": zod.string().nullish(),
   "status": zod.enum(['PROSES', 'READY', 'TERJUAL']),
-  "hargaJual": zod.number().nullish().describe('Actual sale price in IDR'),
-  "tanggalJual": zod.coerce.date().nullish().describe('Date sold'),
+  "hargaJual": zod.number().nullish(),
+  "tanggalJual": zod.coerce.date().nullish(),
+  "namaPembeli": zod.string().nullish(),
+  "nomorPembeli": zod.string().nullish(),
   "createdAt": zod.coerce.date()
 })
 
 
 /**
- * @summary Mark unit as TERJUAL (sold)
+ * @summary Mark unit as sold (TERJUAL)
  */
 export const MarkSoldParams = zod.object({
   "id": zod.coerce.number()
 })
 
-export const markSoldBodyHargaJualMin = 0;
-
-
-
 export const MarkSoldBody = zod.object({
-  "hargaJual": zod.number().min(markSoldBodyHargaJualMin).describe('Actual sale price in IDR')
+  "hargaJual": zod.number(),
+  "namaPembeli": zod.string(),
+  "nomorPembeli": zod.string()
 })
 
 export const MarkSoldResponse = zod.object({
   "id": zod.number(),
-  "tipe": zod.string().describe('Brand and model name (e.g. Asus VivoBook 14)'),
-  "spek": zod.string().describe('Hardware specifications'),
-  "minus": zod.string().describe('Initial condition issues'),
-  "kelengkapan": zod.string().describe('Accessories included'),
-  "hargaBeli": zod.number().describe('Purchase price in IDR'),
-  "biayaQc": zod.number().describe('QC\/parts cost in IDR'),
-  "baterai": zod.number().nullish().describe('Battery health percentage'),
-  "appTambahan": zod.string().nullish().describe('Extra software installed'),
-  "fisik": zod.string().nullish().describe('Physical condition after QC'),
+  "tipe": zod.string(),
+  "spek": zod.string(),
+  "minus": zod.string(),
+  "kelengkapan": zod.string(),
+  "hargaBeli": zod.number(),
+  "biayaQc": zod.number(),
+  "baterai": zod.number().nullish(),
+  "appTambahan": zod.string().nullish(),
+  "fisik": zod.string().nullish(),
   "status": zod.enum(['PROSES', 'READY', 'TERJUAL']),
-  "hargaJual": zod.number().nullish().describe('Actual sale price in IDR'),
-  "tanggalJual": zod.coerce.date().nullish().describe('Date sold'),
+  "hargaJual": zod.number().nullish(),
+  "tanggalJual": zod.coerce.date().nullish(),
+  "namaPembeli": zod.string().nullish(),
+  "nomorPembeli": zod.string().nullish(),
   "createdAt": zod.coerce.date()
 })
 
 
 /**
- * @summary Generate social media caption for a unit
+ * @summary Get marketing caption for a unit
  */
 export const GetUnitCaptionParams = zod.object({
   "id": zod.coerce.number()
@@ -239,7 +228,103 @@ export const GetUnitCaptionResponse = zod.object({
 
 
 /**
- * @summary Get dashboard summary stats
+ * @summary Get invoice data for a sold unit
+ */
+export const GetUnitInvoiceParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const GetUnitInvoiceResponse = zod.object({
+  "nomorInvoice": zod.string(),
+  "tanggal": zod.coerce.date(),
+  "unit": zod.object({
+  "id": zod.number(),
+  "tipe": zod.string(),
+  "spek": zod.string(),
+  "minus": zod.string(),
+  "kelengkapan": zod.string(),
+  "hargaBeli": zod.number(),
+  "biayaQc": zod.number(),
+  "baterai": zod.number().nullish(),
+  "appTambahan": zod.string().nullish(),
+  "fisik": zod.string().nullish(),
+  "status": zod.enum(['PROSES', 'READY', 'TERJUAL']),
+  "hargaJual": zod.number().nullish(),
+  "tanggalJual": zod.coerce.date().nullish(),
+  "namaPembeli": zod.string().nullish(),
+  "nomorPembeli": zod.string().nullish(),
+  "createdAt": zod.coerce.date()
+}),
+  "store": zod.object({
+  "id": zod.number(),
+  "namaToko": zod.string(),
+  "tagline": zod.string(),
+  "alamat": zod.string(),
+  "telepon": zod.string(),
+  "email": zod.string(),
+  "instagram": zod.string(),
+  "facebook": zod.string(),
+  "whatsapp": zod.string(),
+  "tiktok": zod.string(),
+  "website": zod.string(),
+  "logo": zod.string().describe('Base64 data URL of store logo'),
+  "updatedAt": zod.coerce.date()
+}),
+  "subtotal": zod.number(),
+  "total": zod.number()
+})
+
+
+/**
+ * @summary Get kuitansi (receipt) data for a sold unit
+ */
+export const GetUnitKuitansiParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const GetUnitKuitansiResponse = zod.object({
+  "nomorKuitansi": zod.string(),
+  "tanggal": zod.coerce.date(),
+  "unit": zod.object({
+  "id": zod.number(),
+  "tipe": zod.string(),
+  "spek": zod.string(),
+  "minus": zod.string(),
+  "kelengkapan": zod.string(),
+  "hargaBeli": zod.number(),
+  "biayaQc": zod.number(),
+  "baterai": zod.number().nullish(),
+  "appTambahan": zod.string().nullish(),
+  "fisik": zod.string().nullish(),
+  "status": zod.enum(['PROSES', 'READY', 'TERJUAL']),
+  "hargaJual": zod.number().nullish(),
+  "tanggalJual": zod.coerce.date().nullish(),
+  "namaPembeli": zod.string().nullish(),
+  "nomorPembeli": zod.string().nullish(),
+  "createdAt": zod.coerce.date()
+}),
+  "store": zod.object({
+  "id": zod.number(),
+  "namaToko": zod.string(),
+  "tagline": zod.string(),
+  "alamat": zod.string(),
+  "telepon": zod.string(),
+  "email": zod.string(),
+  "instagram": zod.string(),
+  "facebook": zod.string(),
+  "whatsapp": zod.string(),
+  "tiktok": zod.string(),
+  "website": zod.string(),
+  "logo": zod.string().describe('Base64 data URL of store logo'),
+  "updatedAt": zod.coerce.date()
+}),
+  "jumlah": zod.number(),
+  "terbilang": zod.string()
+})
+
+
+/**
+ * @summary Get dashboard statistics
  */
 export const GetDashboardResponse = zod.object({
   "totalModal": zod.number().describe('Total capital invested in READY units (beli + QC)'),
@@ -251,20 +336,76 @@ export const GetDashboardResponse = zod.object({
   "realisasiProfit": zod.number().describe('Realized profit from TERJUAL units'),
   "recentUnits": zod.array(zod.object({
   "id": zod.number(),
-  "tipe": zod.string().describe('Brand and model name (e.g. Asus VivoBook 14)'),
-  "spek": zod.string().describe('Hardware specifications'),
-  "minus": zod.string().describe('Initial condition issues'),
-  "kelengkapan": zod.string().describe('Accessories included'),
-  "hargaBeli": zod.number().describe('Purchase price in IDR'),
-  "biayaQc": zod.number().describe('QC\/parts cost in IDR'),
-  "baterai": zod.number().nullish().describe('Battery health percentage'),
-  "appTambahan": zod.string().nullish().describe('Extra software installed'),
-  "fisik": zod.string().nullish().describe('Physical condition after QC'),
+  "tipe": zod.string(),
+  "spek": zod.string(),
+  "minus": zod.string(),
+  "kelengkapan": zod.string(),
+  "hargaBeli": zod.number(),
+  "biayaQc": zod.number(),
+  "baterai": zod.number().nullish(),
+  "appTambahan": zod.string().nullish(),
+  "fisik": zod.string().nullish(),
   "status": zod.enum(['PROSES', 'READY', 'TERJUAL']),
-  "hargaJual": zod.number().nullish().describe('Actual sale price in IDR'),
-  "tanggalJual": zod.coerce.date().nullish().describe('Date sold'),
+  "hargaJual": zod.number().nullish(),
+  "tanggalJual": zod.coerce.date().nullish(),
+  "namaPembeli": zod.string().nullish(),
+  "nomorPembeli": zod.string().nullish(),
   "createdAt": zod.coerce.date()
 })).describe('Last 5 units added')
+})
+
+
+/**
+ * @summary Get store settings
+ */
+export const GetSettingsResponse = zod.object({
+  "id": zod.number(),
+  "namaToko": zod.string(),
+  "tagline": zod.string(),
+  "alamat": zod.string(),
+  "telepon": zod.string(),
+  "email": zod.string(),
+  "instagram": zod.string(),
+  "facebook": zod.string(),
+  "whatsapp": zod.string(),
+  "tiktok": zod.string(),
+  "website": zod.string(),
+  "logo": zod.string().describe('Base64 data URL of store logo'),
+  "updatedAt": zod.coerce.date()
+})
+
+
+/**
+ * @summary Update store settings
+ */
+export const UpdateSettingsBody = zod.object({
+  "namaToko": zod.string().optional(),
+  "tagline": zod.string().optional(),
+  "alamat": zod.string().optional(),
+  "telepon": zod.string().optional(),
+  "email": zod.string().optional(),
+  "instagram": zod.string().optional(),
+  "facebook": zod.string().optional(),
+  "whatsapp": zod.string().optional(),
+  "tiktok": zod.string().optional(),
+  "website": zod.string().optional(),
+  "logo": zod.string().optional()
+})
+
+export const UpdateSettingsResponse = zod.object({
+  "id": zod.number(),
+  "namaToko": zod.string(),
+  "tagline": zod.string(),
+  "alamat": zod.string(),
+  "telepon": zod.string(),
+  "email": zod.string(),
+  "instagram": zod.string(),
+  "facebook": zod.string(),
+  "whatsapp": zod.string(),
+  "tiktok": zod.string(),
+  "website": zod.string(),
+  "logo": zod.string().describe('Base64 data URL of store logo'),
+  "updatedAt": zod.coerce.date()
 })
 
 

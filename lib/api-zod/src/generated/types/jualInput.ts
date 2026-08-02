@@ -7,9 +7,7 @@
  */
 
 export interface JualInput {
-  /**
-     * Actual sale price in IDR
-     * @minimum 0
-     */
   hargaJual: number;
+  namaPembeli: string;
+  nomorPembeli: string;
 }

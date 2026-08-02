@@ -13,6 +13,7 @@ import JualList from '@/pages/jual';
 import TerjualList from '@/pages/terjual';
 import Laporan from '@/pages/laporan';
 import Sosmed from '@/pages/sosmed';
+import SettingsPage from '@/pages/settings';
 
 const queryClient = new QueryClient();
 
@@ -27,9 +28,7 @@ function Router() {
         <Route path="/terjual" component={TerjualList} />
         <Route path="/laporan" component={Laporan} />
         <Route path="/sosmed" component={Sosmed} />
-        
-        {/* Print route wrapper or handled via CSS media query (as per instructions, handled in /jual via CSS) */}
-        
+        <Route path="/settings" component={SettingsPage} />
         <Route component={NotFound} />
       </Switch>
     </Shell>
