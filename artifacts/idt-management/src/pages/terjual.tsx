@@ -1,9 +1,35 @@
-import { useListUnits } from "@workspace/api-client-react";
+import { useState } from "react";
+import { useListUnits, useDeleteUnit, getListUnitsQueryKey, getGetDashboardQueryKey } from "@workspace/api-client-react";
 import { formatRupiah, formatDate, cn } from "@/lib/utils";
-import { CheckCircle2, TrendingUp, CalendarDays, Wallet } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
+import { CheckCircle2, TrendingUp, CalendarDays, Wallet, Trash2 } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 export default function TerjualList() {
   const { data: units, isLoading } = useListUnits({ status: "TERJUAL" });
+  const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
+  const deleteUnit = useDeleteUnit();
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  const handleDelete = (id: number) => {
+    if (confirmDeleteId === id) {
+      deleteUnit.mutate({ id }, {
+        onSuccess: () => {
+          toast({ title: "Unit dihapus", description: "Riwayat penjualan unit telah dihapus." });
+          queryClient.invalidateQueries({ queryKey: getListUnitsQueryKey() });
+          queryClient.invalidateQueries({ queryKey: getGetDashboardQueryKey() });
+          setConfirmDeleteId(null);
+        },
+        onError: () => {
+          toast({ title: "Gagal menghapus", variant: "destructive" });
+          setConfirmDeleteId(null);
+        }
+      });
+    } else {
+      setConfirmDeleteId(id);
+    }
+  };
 
   if (isLoading) {
     return <div className="p-8 text-center text-muted-foreground animate-pulse">Memuat riwayat penjualan...</div>;
@@ -71,7 +97,7 @@ export default function TerjualList() {
                   </div>
                 </div>
 
-                <div className="flex items-center gap-4 md:gap-8 justify-between md:justify-end border-t md:border-t-0 border-border pt-3 md:pt-0">
+                <div className="flex items-center gap-3 md:gap-6 justify-between md:justify-end border-t md:border-t-0 border-border pt-3 md:pt-0">
                   <div className="text-left md:text-right">
                     <div className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider">Harga Deal</div>
                     <div className="font-bold text-foreground text-lg font-mono">{formatRupiah(jual)}</div>
@@ -84,6 +110,32 @@ export default function TerjualList() {
                     <div className="text-[10px] font-bold uppercase tracking-wider opacity-80">{isProfit ? "Profit" : "Rugi"}</div>
                     <div className="font-bold text-lg">{isProfit ? '+' : ''}{formatRupiah(profit)}</div>
                   </div>
+
+                  {confirmDeleteId === unit.id ? (
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={() => handleDelete(unit.id)}
+                        disabled={deleteUnit.isPending}
+                        className="text-xs bg-destructive text-destructive-foreground px-2 py-1 rounded font-semibold hover:bg-destructive/80 transition-colors"
+                      >
+                        Yakin?
+                      </button>
+                      <button
+                        onClick={() => setConfirmDeleteId(null)}
+                        className="text-xs bg-secondary text-muted-foreground px-2 py-1 rounded hover:bg-secondary/80 transition-colors"
+                      >
+                        Batal
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => handleDelete(unit.id)}
+                      className="p-2 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg transition-colors"
+                      title="Hapus unit"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  )}
                 </div>
 
               </div>

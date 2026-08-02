@@ -1,13 +1,37 @@
 import { useState } from "react";
-import { useListUnits, useCompleteQc, getListUnitsQueryKey, getGetDashboardQueryKey } from "@workspace/api-client-react";
+import { useListUnits, useCompleteQc, useDeleteUnit, getListUnitsQueryKey, getGetDashboardQueryKey } from "@workspace/api-client-react";
 import { formatRupiah, cn, formatDate } from "@/lib/utils";
 import { useQueryClient } from "@tanstack/react-query";
-import { Wrench, Battery, ShieldCheck, DollarSign, Check, X, AlertCircle } from "lucide-react";
+import { Wrench, Battery, ShieldCheck, DollarSign, Check, X, AlertCircle, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 export default function QcList() {
   const { data: units, isLoading } = useListUnits({ status: "PROSES" });
   const [selectedUnit, setSelectedUnit] = useState<number | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
+  const deleteUnit = useDeleteUnit();
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  const handleDelete = (e: React.MouseEvent, id: number) => {
+    e.stopPropagation();
+    if (confirmDeleteId === id) {
+      deleteUnit.mutate({ id }, {
+        onSuccess: () => {
+          toast({ title: "Unit dihapus", description: "Unit berhasil dihapus dari antrean." });
+          queryClient.invalidateQueries({ queryKey: getListUnitsQueryKey() });
+          queryClient.invalidateQueries({ queryKey: getGetDashboardQueryKey() });
+          setConfirmDeleteId(null);
+        },
+        onError: () => {
+          toast({ title: "Gagal menghapus", variant: "destructive" });
+          setConfirmDeleteId(null);
+        }
+      });
+    } else {
+      setConfirmDeleteId(id);
+    }
+  };
 
   if (isLoading) {
     return <div className="p-8 text-center text-muted-foreground animate-pulse">Loading QC queue...</div>;
@@ -41,12 +65,39 @@ export default function QcList() {
           {units.map((unit) => (
             <div 
               key={unit.id}
-              onClick={() => setSelectedUnit(unit.id)}
+              onClick={() => { setConfirmDeleteId(null); setSelectedUnit(unit.id); }}
               className="bg-card border border-border hover:border-primary/50 p-5 rounded-xl cursor-pointer transition-all hover:shadow-[0_4px_20px_-10px_rgba(247,171,12,0.3)] group"
             >
               <div className="flex justify-between items-start mb-2">
                 <h3 className="font-bold text-lg group-hover:text-primary transition-colors">{unit.tipe}</h3>
-                <span className="text-xs text-muted-foreground">{formatDate(unit.createdAt)}</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-muted-foreground">{formatDate(unit.createdAt)}</span>
+                  {confirmDeleteId === unit.id ? (
+                    <div className="flex items-center gap-1" onClick={e => e.stopPropagation()}>
+                      <button
+                        onClick={(e) => handleDelete(e, unit.id)}
+                        disabled={deleteUnit.isPending}
+                        className="text-xs bg-destructive text-destructive-foreground px-2 py-1 rounded font-semibold hover:bg-destructive/80 transition-colors"
+                      >
+                        Yakin?
+                      </button>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setConfirmDeleteId(null); }}
+                        className="text-xs bg-secondary text-muted-foreground px-2 py-1 rounded hover:bg-secondary/80 transition-colors"
+                      >
+                        Batal
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={(e) => handleDelete(e, unit.id)}
+                      className="p-1.5 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+                      title="Hapus unit"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
               </div>
               <p className="text-sm text-muted-foreground mb-3 line-clamp-1">{unit.spek}</p>
               

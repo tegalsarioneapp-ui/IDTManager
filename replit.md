@@ -1,6 +1,6 @@
-# [Project name]
+# INDO DUTA TECH — Management System
 
-_Replace the heading above with the project's name, and this line with one sentence describing what this app does for users._
+An internal management app for buying, quality-checking, selling, and reporting on device inventory (units).
 
 ## Run & Operate
 

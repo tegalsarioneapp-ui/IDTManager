@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
-import { useListUnits, useMarkSold, getListUnitsQueryKey, getGetDashboardQueryKey } from "@workspace/api-client-react";
+import { useListUnits, useMarkSold, useDeleteUnit, getListUnitsQueryKey, getGetDashboardQueryKey } from "@workspace/api-client-react";
 import { formatRupiah, cn, formatDate } from "@/lib/utils";
 import { useQueryClient } from "@tanstack/react-query";
-import { Tags, Printer, DollarSign, Search, Zap, CheckCircle2, Battery, ShieldCheck } from "lucide-react";
+import { Tags, Printer, DollarSign, Search, Zap, CheckCircle2, Battery, ShieldCheck, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import * as Dialog from "@radix-ui/react-dialog";
 
@@ -11,6 +11,30 @@ export default function JualList() {
   const [search, setSearch] = useState("");
   const [selectedUnit, setSelectedUnit] = useState<number | null>(null);
   const [printUnitId, setPrintUnitId] = useState<number | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
+  const deleteUnit = useDeleteUnit();
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  const handleDelete = (e: React.MouseEvent, id: number) => {
+    e.stopPropagation();
+    if (confirmDeleteId === id) {
+      deleteUnit.mutate({ id }, {
+        onSuccess: () => {
+          toast({ title: "Unit dihapus", description: "Unit berhasil dihapus dari etalase." });
+          queryClient.invalidateQueries({ queryKey: getListUnitsQueryKey() });
+          queryClient.invalidateQueries({ queryKey: getGetDashboardQueryKey() });
+          setConfirmDeleteId(null);
+        },
+        onError: () => {
+          toast({ title: "Gagal menghapus", variant: "destructive" });
+          setConfirmDeleteId(null);
+        }
+      });
+    } else {
+      setConfirmDeleteId(id);
+    }
+  };
 
   useEffect(() => {
     const handleAfterPrint = () => setPrintUnitId(null);
@@ -66,15 +90,42 @@ export default function JualList() {
               return (
                 <div key={unit.id} className="bg-card border border-border p-5 rounded-xl flex flex-col justify-between">
                   <div className="space-y-3">
-                    <div className="flex justify-between items-start">
+                    <div className="flex justify-between items-start gap-2">
                       <h3 className="font-bold text-lg text-foreground line-clamp-2">{unit.tipe}</h3>
-                      <button 
-                        onClick={() => handlePrint(unit.id)}
-                        className="p-2 bg-secondary text-muted-foreground hover:text-foreground rounded-lg transition-colors"
-                        title="Cetak Price Tag"
-                      >
-                        <Printer className="w-4 h-4" />
-                      </button>
+                      <div className="flex items-center gap-1 shrink-0">
+                        {confirmDeleteId === unit.id ? (
+                          <>
+                            <button
+                              onClick={(e) => handleDelete(e, unit.id)}
+                              disabled={deleteUnit.isPending}
+                              className="text-xs bg-destructive text-destructive-foreground px-2 py-1 rounded font-semibold hover:bg-destructive/80 transition-colors"
+                            >
+                              Yakin?
+                            </button>
+                            <button
+                              onClick={() => setConfirmDeleteId(null)}
+                              className="text-xs bg-secondary text-muted-foreground px-2 py-1 rounded hover:bg-secondary/80 transition-colors"
+                            >
+                              Batal
+                            </button>
+                          </>
+                        ) : (
+                          <button
+                            onClick={(e) => handleDelete(e, unit.id)}
+                            className="p-2 bg-secondary text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg transition-colors"
+                            title="Hapus unit"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        )}
+                        <button 
+                          onClick={() => handlePrint(unit.id)}
+                          className="p-2 bg-secondary text-muted-foreground hover:text-foreground rounded-lg transition-colors"
+                          title="Cetak Price Tag"
+                        >
+                          <Printer className="w-4 h-4" />
+                        </button>
+                      </div>
                     </div>
                     
                     <p className="text-sm text-muted-foreground line-clamp-2">{unit.spek}</p>
