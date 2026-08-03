@@ -217,11 +217,12 @@ function SoldDialog({ unitId, onClose, units }: { unitId: number | null, onClose
   const [namaPembeli, setNamaPembeli] = useState("");
   const [nomorPembeli, setNomorPembeli] = useState("");
 
-  // Initialize hargaJual when unit changes — must be useEffect, not inline in render
+  // Initialize hargaJual setiap kali dialog dibuka (unitId berubah dari null ke nilai)
   useEffect(() => {
-    if (unit) {
+    if (unit && unitId) {
       setHargaJual(Math.round(estimasi));
     }
+  // estimasi bergantung pada unit.hargaBeli + unit.biayaQc; unitId cukup sebagai trigger
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [unitId]);
 
@@ -230,6 +231,11 @@ function SoldDialog({ unitId, onClose, units }: { unitId: number | null, onClose
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!unitId) return;
+
+    if (hargaJual <= 0) {
+      toast({ title: "Harga jual tidak valid", description: "Harga jual harus lebih dari Rp 0.", variant: "destructive" });
+      return;
+    }
 
     markSold.mutate({ id: unitId, data: { hargaJual, namaPembeli, nomorPembeli } }, {
       onSuccess: () => {

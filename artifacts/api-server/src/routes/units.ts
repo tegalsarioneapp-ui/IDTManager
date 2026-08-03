@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { eq, desc, count, sum, sql } from "drizzle-orm";
+import { eq, and, desc, count, sum, sql } from "drizzle-orm";
 import { db, unitsTable, storeSettingsTable } from "@workspace/db";
 import {
   ListUnitsQueryParams,
@@ -174,11 +174,11 @@ router.post("/units/:id/qc", async (req, res): Promise<void> => {
       appTambahan: parsed.data.appTambahan ?? null,
       status: "READY",
     })
-    .where(eq(unitsTable.id, params.data.id))
+    .where(and(eq(unitsTable.id, params.data.id), eq(unitsTable.status, "PROSES")))
     .returning();
 
   if (!unit) {
-    res.status(404).json({ error: "Unit not found" });
+    res.status(404).json({ error: "Unit tidak ditemukan atau statusnya bukan PROSES" });
     return;
   }
 
@@ -209,11 +209,11 @@ router.post("/units/:id/jual", async (req, res): Promise<void> => {
       status: "TERJUAL",
       tanggalJual: new Date(),
     })
-    .where(eq(unitsTable.id, params.data.id))
+    .where(and(eq(unitsTable.id, params.data.id), eq(unitsTable.status, "READY")))
     .returning();
 
   if (!unit) {
-    res.status(404).json({ error: "Unit not found" });
+    res.status(404).json({ error: "Unit tidak ditemukan atau statusnya bukan READY" });
     return;
   }
 
@@ -229,10 +229,10 @@ router.get("/units/:id/caption", async (req, res): Promise<void> => {
     return;
   }
 
-  const [unit] = await db
-    .select()
-    .from(unitsTable)
-    .where(eq(unitsTable.id, params.data.id));
+  const [[unit], [store]] = await Promise.all([
+    db.select().from(unitsTable).where(eq(unitsTable.id, params.data.id)),
+    db.select().from(storeSettingsTable).where(eq(storeSettingsTable.id, 1)),
+  ]);
 
   if (!unit) {
     res.status(404).json({ error: "Unit not found" });
@@ -251,14 +251,18 @@ router.get("/units/:id/caption", async (req, res): Promise<void> => {
   let teksApp = "Full Aplikasi (Windows, Office, Browser, Standar siap pakai!)";
   if (unit.appTambahan) teksApp += ` + ${unit.appTambahan}`;
 
+  const namaToko = store?.namaToko || "INDO DUTA TECH";
+  const alamat = store?.alamat ? `\u{1F3E0} ${store.alamat}` : "";
+  const waLine = store?.whatsapp ? `\u{1F4F1} WA: ${store.whatsapp}` : "";
+  const igLine = store?.instagram ? `\u{1F310} IG: ${store.instagram}` : "";
+  const kontakLines = [alamat, waLine, igLine].filter(Boolean).join("\n");
+
   const caption = `\u{1F48E} PREMIUM REFURBISHED LAPTOP \u{1F48E}
 
 \u{1F4BB} ${unit.tipe.toUpperCase()}
 
-\u2699\uFE0F SPESIFIKASI GAHAR:
+\u2699\uFE0F SPESIFIKASI:
 ${unit.spek}
-\u2714\uFE0F Storage: SSD (Super Fast Booting)
-\u2714\uFE0F RAM: Standar 8GB (Lancar Multitasking)
 
 \u2728 KONDISI & QC PASSING:
 - 100% Lulus Quality Control Ketat
@@ -269,11 +273,8 @@ ${unit.spek}
 
 \u{1F4B0} HARGA NETT: ${formatRp(hargaJual)}
 
-\u{1F4CD} INDO DUTA TECH
-\u{1F3E0} Tegalsari Barat V No. 72, Semarang
-\u23F0 Buka Setiap Hari (Diskon up to 50%)
-\u{1F4F1} WA: 082213002006
-\u{1F310} IG: @idtgrupsemarang`;
+\u{1F4CD} ${namaToko}
+${kontakLines}`.trimEnd();
 
   res.json(GetUnitCaptionResponse.parse({ caption }));
 });

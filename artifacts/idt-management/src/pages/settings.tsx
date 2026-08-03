@@ -8,7 +8,7 @@ import {
 import { cn } from "@/lib/utils";
 
 export default function Settings() {
-  const { data: settings, isLoading } = useGetSettings();
+  const { data: settings, isLoading, error } = useGetSettings();
   const updateSettings = useUpdateSettings();
   const { toast } = useToast();
   const fileRef = useRef<HTMLInputElement>(null);
@@ -61,6 +61,11 @@ export default function Settings() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    // Guard: jangan simpan jika data asli belum pernah berhasil dimuat
+    if (!settings) {
+      toast({ title: "Tidak dapat menyimpan", description: "Data pengaturan belum berhasil dimuat. Muat ulang halaman.", variant: "destructive" });
+      return;
+    }
     updateSettings.mutate({ data: form }, {
       onSuccess: () => toast({ title: "Pengaturan tersimpan ✓", description: "Profil toko berhasil diperbarui." }),
       onError: () => toast({ title: "Gagal menyimpan", variant: "destructive" }),
@@ -69,6 +74,15 @@ export default function Settings() {
 
   if (isLoading) {
     return <div className="p-8 text-center text-muted-foreground animate-pulse">Memuat pengaturan...</div>;
+  }
+
+  if (error) {
+    return (
+      <div className="p-8 text-center text-muted-foreground">
+        <p className="text-lg font-bold text-destructive mb-1">Gagal memuat pengaturan</p>
+        <p className="text-sm">Periksa koneksi server dan muat ulang halaman.</p>
+      </div>
+    );
   }
 
   return (
