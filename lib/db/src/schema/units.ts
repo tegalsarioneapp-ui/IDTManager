@@ -1,4 +1,4 @@
-import { pgTable, serial, text, integer, timestamp, pgEnum } from "drizzle-orm/pg-core";
+import { pgTable, serial, text, integer, timestamp, pgEnum, index } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 
@@ -21,7 +21,12 @@ export const unitsTable = pgTable("units", {
   namaPembeli: text("nama_pembeli"),
   nomorPembeli: text("nomor_pembeli"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
-});
+}, (t) => [
+  // Bug #15: index on status — all list/filter/aggregate queries filter by status
+  index("units_status_idx").on(t.status),
+  // Bug #16: index on tanggal_jual — date-range queries in laporan and terjual views
+  index("units_tanggal_jual_idx").on(t.tanggalJual),
+]);
 
 export const insertUnitSchema = createInsertSchema(unitsTable).omit({
   id: true,

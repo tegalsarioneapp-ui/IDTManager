@@ -433,7 +433,6 @@ components:
         - biayaQc
         - fisik
         - baterai
-        - appTambahan
       properties:
         biayaQc:
           type: number
@@ -443,6 +442,8 @@ components:
           type: number
         appTambahan:
           type: string
+          nullable: true
+          description: Optional extra apps installed during QC
 
     JualInput:
       type: object
@@ -590,6 +591,7 @@ components:
       type: object
       required:
         - totalModal
+        - totalModalTerjual
         - totalUnitProses
         - totalUnitReady
         - totalUnitTerjual
@@ -601,6 +603,9 @@ components:
         totalModal:
           type: number
           description: Total capital invested in READY units (beli + QC)
+        totalModalTerjual:
+          type: number
+          description: Total capital invested in TERJUAL units (beli + QC) — denominator for ROA
         totalUnitProses:
           type: number
           description: Units currently in QC process

@@ -57,7 +57,8 @@ export interface QcInput {
   biayaQc: number;
   fisik: string;
   baterai: number;
-  appTambahan: string;
+  /** Optional extra apps installed during QC */
+  appTambahan?: string | null;
 }
 
 export interface JualInput {
@@ -122,6 +123,8 @@ export interface StoreSettingsInput {
 export interface DashboardStats {
   /** Total capital invested in READY units (beli + QC) */
   totalModal: number;
+  /** Total capital invested in TERJUAL units (beli + QC) — denominator for ROA */
+  totalModalTerjual: number;
   /** Units currently in QC process */
   totalUnitProses: number;
   /** Units ready for sale */

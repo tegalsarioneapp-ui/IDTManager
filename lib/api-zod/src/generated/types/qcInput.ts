@@ -10,5 +10,6 @@ export interface QcInput {
   biayaQc: number;
   fisik: string;
   baterai: number;
-  appTambahan: string;
+  /** Optional extra apps installed during QC */
+  appTambahan?: string | null;
 }

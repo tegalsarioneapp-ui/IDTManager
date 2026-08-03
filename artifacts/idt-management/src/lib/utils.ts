@@ -5,13 +5,13 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export function formatRupiah(value: number) {
+export function formatRupiah(value: number | null | undefined) {
   return new Intl.NumberFormat('id-ID', {
     style: 'currency',
     currency: 'IDR',
     minimumFractionDigits: 0,
     maximumFractionDigits: 0
-  }).format(value);
+  }).format(value ?? 0);
 }
 
 export function formatDate(dateStr: string) {

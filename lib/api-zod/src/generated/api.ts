@@ -159,7 +159,7 @@ export const CompleteQcBody = zod.object({
   "biayaQc": zod.number(),
   "fisik": zod.string(),
   "baterai": zod.number(),
-  "appTambahan": zod.string()
+  "appTambahan": zod.string().nullish().describe('Optional extra apps installed during QC')
 })
 
 export const CompleteQcResponse = zod.object({
@@ -328,6 +328,7 @@ export const GetUnitKuitansiResponse = zod.object({
  */
 export const GetDashboardResponse = zod.object({
   "totalModal": zod.number().describe('Total capital invested in READY units (beli + QC)'),
+  "totalModalTerjual": zod.number().describe('Total capital invested in TERJUAL units (beli + QC) — denominator for ROA'),
   "totalUnitProses": zod.number().describe('Units currently in QC process'),
   "totalUnitReady": zod.number().describe('Units ready for sale'),
   "totalUnitTerjual": zod.number().describe('Units sold'),

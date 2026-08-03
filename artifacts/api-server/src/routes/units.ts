@@ -377,6 +377,9 @@ router.get("/dashboard", async (_req, res): Promise<void> => {
     db
       .select({
         total: count(),
+        // Bug #7 fix: also sum the capital deployed in sold units so the
+        // frontend can compute a meaningful ROA (profit / capital-in-sold-units).
+        totalModalTerjual: sum(sql<number>`${unitsTable.hargaBeli} + ${unitsTable.biayaQc}`),
         realisasiProfit: sum(
           sql<number>`COALESCE(${unitsTable.hargaJual}, 0) - ${unitsTable.hargaBeli} - ${unitsTable.biayaQc}`
         ),
@@ -396,6 +399,7 @@ router.get("/dashboard", async (_req, res): Promise<void> => {
 
   const stats = {
     totalModal,
+    totalModalTerjual: Number(terjualAgg[0]?.totalModalTerjual ?? 0),
     totalUnitProses: prosesAgg[0]?.total ?? 0,
     totalUnitReady: readyAgg[0]?.total ?? 0,
     totalUnitTerjual: terjualAgg[0]?.total ?? 0,

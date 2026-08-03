@@ -1,16 +1,24 @@
 import { useGetDashboard } from "@workspace/api-client-react";
 import { formatRupiah } from "@/lib/utils";
-import { PieChart, LineChart, Wallet, TrendingUp, AlertTriangle } from "lucide-react";
+import { PieChart, Wallet, TrendingUp, AlertTriangle } from "lucide-react";
 import { ResponsiveContainer, PieChart as RePieChart, Pie, Cell, Tooltip, Legend } from "recharts";
 
 export default function Laporan() {
-  const { data: dashboard, isLoading } = useGetDashboard();
+  const { data: dashboard, isLoading, isError } = useGetDashboard();
 
   if (isLoading) {
     return <div className="p-8 text-center text-muted-foreground animate-pulse">Menghitung data keuangan...</div>;
   }
 
-  if (!dashboard) return null;
+  if (isError || !dashboard) {
+    return (
+      <div className="p-8 text-center text-destructive">
+        <AlertTriangle className="w-8 h-8 mx-auto mb-2" />
+        <p className="font-semibold">Gagal memuat data laporan.</p>
+        <p className="text-sm text-muted-foreground mt-1">Periksa koneksi ke server dan coba lagi.</p>
+      </div>
+    );
+  }
 
   // Simple distribution data for chart
   const statusData = [
@@ -19,8 +27,11 @@ export default function Laporan() {
     { name: 'TERJUAL (Sukses)', value: dashboard.totalUnitTerjual, color: '#3b82f6' }
   ];
 
-  const totalAset = dashboard.totalModal; 
-  const roa = dashboard.totalModal > 0 ? (dashboard.realisasiProfit / dashboard.totalModal) * 100 : 0;
+  // Bug #7 fix: ROA uses capital deployed in SOLD units as denominator, not READY stock.
+  // totalModalTerjual = sum(hargaBeli + biayaQc) for TERJUAL units.
+  const roa = dashboard.totalModalTerjual > 0
+    ? (dashboard.realisasiProfit / dashboard.totalModalTerjual) * 100
+    : 0;
 
   return (
     <div className="p-4 md:p-8 max-w-5xl mx-auto space-y-8">
@@ -65,7 +76,14 @@ export default function Laporan() {
               <div className="pt-5 border-t border-border flex items-center justify-between">
                 <div>
                   <div className="text-xs text-muted-foreground mb-1">Return on Asset (ROA)</div>
-                  <div className="text-lg font-bold text-foreground">{roa.toFixed(1)}%</div>
+                  <div className="text-lg font-bold text-foreground">
+                    {dashboard.totalModalTerjual > 0 ? `${roa.toFixed(1)}%` : '—'}
+                  </div>
+                  {dashboard.totalModalTerjual > 0 && (
+                    <div className="text-[10px] text-muted-foreground mt-0.5">
+                      dari modal unit terjual {formatRupiah(dashboard.totalModalTerjual)}
+                    </div>
+                  )}
                 </div>
                 {roa < 10 && roa > 0 && (
                   <div className="bg-amber-500/10 text-amber-500 px-3 py-1 rounded flex items-center gap-2 text-xs font-bold">
