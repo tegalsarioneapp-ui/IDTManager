@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { eq, desc, inArray } from "drizzle-orm";
+import { eq, desc, count, sum, sql } from "drizzle-orm";
 import { db, unitsTable, storeSettingsTable } from "@workspace/db";
 import {
   ListUnitsQueryParams,
@@ -283,13 +283,10 @@ function terbilang(n: number): string {
   const satuan = ["", "satu", "dua", "tiga", "empat", "lima", "enam", "tujuh", "delapan", "sembilan",
     "sepuluh", "sebelas", "dua belas", "tiga belas", "empat belas", "lima belas", "enam belas",
     "tujuh belas", "delapan belas", "sembilan belas"];
+  const puluhan = ["", "", "dua puluh", "tiga puluh", "empat puluh", "lima puluh",
+    "enam puluh", "tujuh puluh", "delapan puluh", "sembilan puluh"];
   if (n < 20) return satuan[n];
-  if (n < 100) return satuan[Math.floor(n / 10) * 10 - n % 10 === 0 ? 0 : Math.floor(n / 10)] + (n % 10 !== 0 ? " " + satuan[n % 10] : "");
-  if (n < 100) {
-    const tens = ["", "", "dua puluh", "tiga puluh", "empat puluh", "lima puluh",
-      "enam puluh", "tujuh puluh", "delapan puluh", "sembilan puluh"];
-    return tens[Math.floor(n / 10)] + (n % 10 !== 0 ? " " + satuan[n % 10] : "");
-  }
+  if (n < 100) return puluhan[Math.floor(n / 10)] + (n % 10 !== 0 ? " " + satuan[n % 10] : "");
   if (n < 200) return "seratus" + (n % 100 !== 0 ? " " + terbilang(n % 100) : "");
   if (n < 1000) return satuan[Math.floor(n / 100)] + " ratus" + (n % 100 !== 0 ? " " + terbilang(n % 100) : "");
   if (n < 2000) return "seribu" + (n % 1000 !== 0 ? " " + terbilang(n % 1000) : "");
@@ -358,44 +355,52 @@ router.get("/units/:id/kuitansi", async (req, res): Promise<void> => {
   }));
 });
 
-// GET /dashboard
+// GET /dashboard — uses SQL aggregates, no full-table scan
 router.get("/dashboard", async (_req, res): Promise<void> => {
-  const allUnits = await db.select().from(unitsTable);
+  // Run all queries in parallel
+  const [prosesAgg, readyAgg, terjualAgg, recentUnits] = await Promise.all([
+    db
+      .select({ total: count() })
+      .from(unitsTable)
+      .where(eq(unitsTable.status, "PROSES")),
 
-  const unitsByStatus = {
-    PROSES: allUnits.filter((u) => u.status === "PROSES"),
-    READY: allUnits.filter((u) => u.status === "READY"),
-    TERJUAL: allUnits.filter((u) => u.status === "TERJUAL"),
-  };
+    db
+      .select({
+        total: count(),
+        totalModal: sum(sql<number>`${unitsTable.hargaBeli} + ${unitsTable.biayaQc}`),
+        estimasiNilaiJual: sum(sql<number>`ROUND((${unitsTable.hargaBeli} + ${unitsTable.biayaQc}) * 1.05)`),
+      })
+      .from(unitsTable)
+      .where(eq(unitsTable.status, "READY")),
 
-  let totalModal = 0;
-  let estimasiNilaiJual = 0;
-  unitsByStatus.READY.forEach((u) => {
-    const modal = u.hargaBeli + u.biayaQc;
-    totalModal += modal;
-    estimasiNilaiJual += Math.round(modal * 1.05);
-  });
-  const potensiProfit = estimasiNilaiJual - totalModal;
+    db
+      .select({
+        total: count(),
+        realisasiProfit: sum(
+          sql<number>`COALESCE(${unitsTable.hargaJual}, 0) - ${unitsTable.hargaBeli} - ${unitsTable.biayaQc}`
+        ),
+      })
+      .from(unitsTable)
+      .where(eq(unitsTable.status, "TERJUAL")),
 
-  let realisasiProfit = 0;
-  unitsByStatus.TERJUAL.forEach((u) => {
-    const modal = u.hargaBeli + u.biayaQc;
-    realisasiProfit += (u.hargaJual ?? 0) - modal;
-  });
+    db
+      .select()
+      .from(unitsTable)
+      .orderBy(desc(unitsTable.createdAt))
+      .limit(5),
+  ]);
 
-  // Recent 5 units (any status)
-  const recentUnits = allUnits
-    .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
-    .slice(0, 5);
+  const totalModal = Number(readyAgg[0]?.totalModal ?? 0);
+  const estimasiNilaiJual = Number(readyAgg[0]?.estimasiNilaiJual ?? 0);
 
   const stats = {
     totalModal,
-    totalUnitProses: unitsByStatus.PROSES.length,
-    totalUnitReady: unitsByStatus.READY.length,
-    totalUnitTerjual: unitsByStatus.TERJUAL.length,
+    totalUnitProses: prosesAgg[0]?.total ?? 0,
+    totalUnitReady: readyAgg[0]?.total ?? 0,
+    totalUnitTerjual: terjualAgg[0]?.total ?? 0,
     estimasiNilaiJual,
-    potensiProfit,
-    realisasiProfit,
+    potensiProfit: estimasiNilaiJual - totalModal,
+    realisasiProfit: Number(terjualAgg[0]?.realisasiProfit ?? 0),
     recentUnits,
   };
 

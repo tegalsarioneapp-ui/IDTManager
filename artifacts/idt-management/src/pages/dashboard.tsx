@@ -12,7 +12,7 @@ import {
 import { cn } from "@/lib/utils";
 
 export default function Dashboard() {
-  const { data: dashboard, isLoading } = useGetDashboard();
+  const { data: dashboard, isLoading, error } = useGetDashboard();
 
   if (isLoading) {
     return (
@@ -25,7 +25,14 @@ export default function Dashboard() {
     );
   }
 
-  if (!dashboard) return null;
+  if (error || !dashboard) {
+    return (
+      <div className="p-8 text-center text-muted-foreground">
+        <p className="text-lg font-bold text-destructive mb-1">Gagal memuat dashboard</p>
+        <p className="text-sm">Periksa koneksi server dan muat ulang halaman.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="p-4 md:p-8 space-y-8 max-w-7xl mx-auto">

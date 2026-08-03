@@ -8,7 +8,7 @@ import { InvoicePrint } from "@/components/InvoicePrint";
 import { KuitansiPrint } from "@/components/KuitansiPrint";
 
 export default function TerjualList() {
-  const { data: units, isLoading } = useListUnits({ status: "TERJUAL" });
+  const { data: units, isLoading, error } = useListUnits({ status: "TERJUAL" });
   const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
   const [invoiceUnitId, setInvoiceUnitId] = useState<number | null>(null);
   const [kuitansiUnitId, setKuitansiUnitId] = useState<number | null>(null);
@@ -37,6 +37,15 @@ export default function TerjualList() {
 
   if (isLoading) {
     return <div className="p-8 text-center text-muted-foreground animate-pulse">Memuat riwayat penjualan...</div>;
+  }
+
+  if (error) {
+    return (
+      <div className="p-8 text-center text-muted-foreground">
+        <p className="text-lg font-bold text-destructive mb-1">Gagal memuat riwayat penjualan</p>
+        <p className="text-sm">Periksa koneksi server dan muat ulang halaman.</p>
+      </div>
+    );
   }
 
   // Sort by sell date descending

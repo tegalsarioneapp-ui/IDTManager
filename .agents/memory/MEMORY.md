@@ -1,0 +1,3 @@
+- [Dashboard SQL aggregates](dashboard-aggregates.md) — dashboard must use SQL COUNT/SUM, not full-table scan into memory
+- [terbilang fix](terbilang-fix.md) — original terbilang() had dead code block; puluhan array is the correct fix for 20-99
+- [React Query config](react-query-config.md) — staleTime=30s, retry=1, refetchOnWindowFocus=false prevents excessive refetches

@@ -16,7 +16,16 @@ import Laporan from '@/pages/laporan';
 import Sosmed from '@/pages/sosmed';
 import SettingsPage from '@/pages/settings';
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 30 * 1000,   // data fresh 30 detik — kurangi refetch berlebihan
+      gcTime: 5 * 60 * 1000,  // cache 5 menit
+      retry: 1,                // 1x retry cukup, jangan buat user nunggu 3x
+      refetchOnWindowFocus: false, // jangan refetch saat alt-tab
+    },
+  },
+});
 
 function Router() {
   return (

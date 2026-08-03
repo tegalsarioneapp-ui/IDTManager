@@ -7,7 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import * as Dialog from "@radix-ui/react-dialog";
 
 export default function JualList() {
-  const { data: units, isLoading } = useListUnits({ status: "READY" });
+  const { data: units, isLoading, error } = useListUnits({ status: "READY" });
   const [search, setSearch] = useState("");
   const [selectedUnit, setSelectedUnit] = useState<number | null>(null);
   const [printUnitId, setPrintUnitId] = useState<number | null>(null);
@@ -51,6 +51,15 @@ export default function JualList() {
 
   if (isLoading) {
     return <div className="p-8 text-center text-muted-foreground animate-pulse">Memuat etalase...</div>;
+  }
+
+  if (error) {
+    return (
+      <div className="p-8 text-center text-muted-foreground">
+        <p className="text-lg font-bold text-destructive mb-1">Gagal memuat etalase</p>
+        <p className="text-sm">Periksa koneksi server dan muat ulang halaman.</p>
+      </div>
+    );
   }
 
   return (
@@ -208,10 +217,13 @@ function SoldDialog({ unitId, onClose, units }: { unitId: number | null, onClose
   const [namaPembeli, setNamaPembeli] = useState("");
   const [nomorPembeli, setNomorPembeli] = useState("");
 
-  // Initialize input when unit opens
-  if (unit && hargaJual === 0) {
-    setHargaJual(estimasi);
-  }
+  // Initialize hargaJual when unit changes — must be useEffect, not inline in render
+  useEffect(() => {
+    if (unit) {
+      setHargaJual(Math.round(estimasi));
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [unitId]);
 
   const profit = hargaJual - modal;
 
@@ -228,6 +240,9 @@ function SoldDialog({ unitId, onClose, units }: { unitId: number | null, onClose
         setNomorPembeli("");
         setHargaJual(0);
         onClose();
+      },
+      onError: () => {
+        toast({ title: "Gagal menyimpan penjualan", description: "Periksa koneksi dan coba lagi.", variant: "destructive" });
       }
     });
   };

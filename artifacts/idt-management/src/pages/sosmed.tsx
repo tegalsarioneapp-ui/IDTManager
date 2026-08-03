@@ -5,12 +5,12 @@ import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 
 export default function Sosmed() {
-  const { data: units, isLoading: unitsLoading } = useListUnits({ status: "READY" });
+  const { data: units, isLoading: unitsLoading, error: unitsError } = useListUnits({ status: "READY" });
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [copied, setCopied] = useState(false);
   const { toast } = useToast();
 
-  const { data: captionData, isFetching: captionLoading } = useGetUnitCaption(selectedId!, {
+  const { data: captionData, isFetching: captionLoading, error: captionError } = useGetUnitCaption(selectedId!, {
     query: { 
       enabled: !!selectedId,
       queryKey: getGetUnitCaptionQueryKey(selectedId!)
@@ -73,7 +73,7 @@ export default function Sosmed() {
             <div className="relative">
               <textarea 
                 readOnly
-                value={captionData?.caption || (captionLoading ? "Menyusun kata-kata..." : "Gagal generate caption.")}
+                value={captionData?.caption || (captionLoading ? "Menyusun kata-kata..." : captionError ? "Gagal generate caption. Coba pilih unit lain." : "")}
                 className={cn(
                   "w-full bg-secondary border border-border rounded-xl p-5 text-sm min-h-[300px] resize-none focus:outline-none leading-relaxed",
                   captionLoading && "opacity-50 blur-[2px]"

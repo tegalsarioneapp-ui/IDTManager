@@ -6,7 +6,7 @@ import { Wrench, Battery, ShieldCheck, DollarSign, Check, X, AlertCircle, Trash2
 import { useToast } from "@/hooks/use-toast";
 
 export default function QcList() {
-  const { data: units, isLoading } = useListUnits({ status: "PROSES" });
+  const { data: units, isLoading, error } = useListUnits({ status: "PROSES" });
   const [selectedUnit, setSelectedUnit] = useState<number | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
   const deleteUnit = useDeleteUnit();
@@ -34,7 +34,16 @@ export default function QcList() {
   };
 
   if (isLoading) {
-    return <div className="p-8 text-center text-muted-foreground animate-pulse">Loading QC queue...</div>;
+    return <div className="p-8 text-center text-muted-foreground animate-pulse">Memuat antrean QC...</div>;
+  }
+
+  if (error) {
+    return (
+      <div className="p-8 text-center text-muted-foreground">
+        <p className="text-lg font-bold text-destructive mb-1">Gagal memuat data QC</p>
+        <p className="text-sm">Periksa koneksi server dan muat ulang halaman.</p>
+      </div>
+    );
   }
 
   if (selectedUnit) {
@@ -159,6 +168,9 @@ function QcForm({ id, onBack }: { id: number; onBack: () => void }) {
         queryClient.invalidateQueries({ queryKey: getListUnitsQueryKey() });
         queryClient.invalidateQueries({ queryKey: getGetDashboardQueryKey() });
         onBack();
+      },
+      onError: () => {
+        toast({ title: "Gagal menyimpan QC", description: "Periksa koneksi dan coba lagi.", variant: "destructive" });
       }
     });
   };
