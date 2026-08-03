@@ -5,6 +5,8 @@ import NotFound from '@/pages/not-found';
 import { Route, Switch, Router as WouterRouter, Redirect } from 'wouter';
 import { Shell } from '@/components/layout/shell';
 import { InstallPWA } from '@/components/InstallPWA';
+import { AuthProvider, useAuth } from '@/context/auth';
+import LoginPage from '@/pages/login';
 
 // Pages
 import Dashboard from '@/pages/dashboard';
@@ -19,15 +21,34 @@ import SettingsPage from '@/pages/settings';
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 30 * 1000,   // data fresh 30 detik — kurangi refetch berlebihan
-      gcTime: 5 * 60 * 1000,  // cache 5 menit
-      retry: 1,                // 1x retry cukup, jangan buat user nunggu 3x
-      refetchOnWindowFocus: false, // jangan refetch saat alt-tab
+      staleTime: 30 * 1000,
+      gcTime: 5 * 60 * 1000,
+      retry: 1,
+      refetchOnWindowFocus: false,
     },
   },
 });
 
 function Router() {
+  const { isLoggedIn, isLoading } = useAuth();
+
+  if (isLoading) {
+    return (
+      <div className="min-h-[100dvh] flex items-center justify-center bg-background">
+        <div className="flex flex-col items-center gap-3 text-muted-foreground">
+          <div className="w-10 h-10 rounded-xl bg-primary text-primary-foreground flex items-center justify-center font-bold text-sm animate-pulse">
+            IDT
+          </div>
+          <p className="text-sm">Memuat...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isLoggedIn) {
+    return <LoginPage />;
+  }
+
   return (
     <Shell>
       <Switch>
@@ -50,7 +71,9 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, '')}>
-          <Router />
+          <AuthProvider>
+            <Router />
+          </AuthProvider>
         </WouterRouter>
         <Toaster />
         <InstallPWA />

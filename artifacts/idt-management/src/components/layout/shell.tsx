@@ -7,14 +7,17 @@ import {
   CheckCircle2, 
   PieChart, 
   Share2,
-  Settings
+  Settings,
+  LogOut,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useListUnits } from "@workspace/api-client-react";
+import { useAuth } from "@/context/auth";
 
 export function Shell({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
   const { data: units } = useListUnits({ status: "PROSES" });
+  const { logout } = useAuth();
   
   const qcCount = units?.length || 0;
 
@@ -61,6 +64,16 @@ export function Shell({ children }: { children: React.ReactNode }) {
             );
           })}
         </nav>
+        {/* Logout — desktop sidebar footer */}
+        <div className="px-4 pb-6 pt-2 border-t border-border mt-2">
+          <button
+            onClick={() => void logout()}
+            className="flex items-center gap-3 px-3 py-3 rounded-lg w-full text-muted-foreground hover:bg-secondary hover:text-foreground transition-all duration-200 group"
+          >
+            <LogOut className="w-5 h-5 text-muted-foreground group-hover:text-foreground" />
+            <span className="text-sm">Keluar</span>
+          </button>
+        </div>
       </aside>
 
       {/* Main Content */}
