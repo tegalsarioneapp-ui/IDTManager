@@ -1,0 +1,24 @@
+kind = "mobile"
+previewPath = "/idt-mobile/"
+title = "IDT Mobile — Manajemen Stok"
+description = "Aplikasi mobile companion untuk sistem management INDO DUTA TECH. Memungkinkan tim untuk kelola stok HP (beli, QC, jual, terjual), lihat dashboard keuangan, dan login dengan biometrik langsung dari smartphone. Menggunakan API server yang sama dengan aplikasi web."
+version = "1.0.0"
+id = "artifacts/idt-mobile"
+router = "expo-domain"
+
+[[services]]
+name = "expo"
+ensurePreviewReachable = "/status"
+paths = [ "/idt-mobile/" ]
+localPort = 23092
+
+[services.development]
+run = "pnpm --filter @workspace/idt-mobile run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/idt-mobile", "run", "build" ]
+run = [ "pnpm", "--filter", "@workspace/idt-mobile", "run", "serve" ]
+
+[services.env]
+PORT = "23092"
+BASE_PATH = "/idt-mobile/"
