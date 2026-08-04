@@ -26,11 +26,19 @@ function safeUser(u: typeof usersTable.$inferSelect) {
   };
 }
 
-// ─── Public: check / me / users ───────────────────────────────────────────────
+// ─── Public: check / status / me / users ──────────────────────────────────────
 
 router.get("/auth/check", async (_req, res): Promise<void> => {
   const [user] = await db.select({ id: usersTable.id }).from(usersTable).limit(1);
   res.json({ hasUsers: !!user });
+});
+
+// Lightweight session probe — always returns 200, never 401
+router.get("/auth/status", async (req, res): Promise<void> => {
+  if (!req.session.userId) { res.json({ loggedIn: false }); return; }
+  const [user] = await db.select({ username: usersTable.username }).from(usersTable).where(eq(usersTable.id, req.session.userId));
+  if (!user) { req.session.destroy(() => {}); res.json({ loggedIn: false }); return; }
+  res.json({ loggedIn: true, username: user.username });
 });
 
 router.get("/auth/me", async (req, res): Promise<void> => {
@@ -213,6 +221,10 @@ router.post("/auth/login/finish", async (req, res): Promise<void> => {
   req.session.challenge = undefined;
   req.session.pendingAuth = undefined;
   req.session.userId = userId;
+
+  await new Promise<void>((resolve, reject) =>
+    req.session.save((err) => (err ? reject(err) : resolve()))
+  );
 
   const [user] = await db.select().from(usersTable).where(eq(usersTable.id, userId));
   res.json({ ok: true, user: user ? safeUser(user) : null });

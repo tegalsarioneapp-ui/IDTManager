@@ -1,11 +1,123 @@
-import { useState } from "react";
-import { useQueryClient } from "@tanstack/react-query";
-import { Eye, EyeOff, LogIn, Loader2, AlertCircle, Fingerprint, KeyRound, CheckCircle2, ShieldCheck } from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
+import {
+  Eye, EyeOff, LogIn, Loader2, AlertCircle,
+  Fingerprint, KeyRound, CheckCircle2, ShieldCheck,
+} from "lucide-react";
 import { startRegistration, startAuthentication } from "@simplewebauthn/browser";
-import type { AuthUser } from "@/hooks/useAuth";
+import { useAuth } from "@/context/auth";
 
-// ─── Step 1: Password Login ────────────────────────────────────────────────────
-function PasswordLoginForm({ onSuccess }: { onSuccess: (user: AuthUser) => void }) {
+export interface AuthUser {
+  id: number;
+  username: string;
+  displayName: string;
+  mustChangePassword: boolean;
+}
+
+const BIO_KEY = "idt_bio_username";
+
+// ─── Biometric login helper ────────────────────────────────────────────────────
+async function doBiometricLogin(username: string): Promise<AuthUser> {
+  const origin = window.location.origin;
+  const beginRes = await fetch("/api/auth/login/begin", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify({ username, origin }),
+  });
+  if (!beginRes.ok) { const d = await beginRes.json(); throw new Error(d.error); }
+  const options = await beginRes.json();
+
+  const credential = await startAuthentication({ optionsJSON: options });
+
+  const finishRes = await fetch("/api/auth/login/finish", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify(credential),
+  });
+  if (!finishRes.ok) { const d = await finishRes.json(); throw new Error(d.error); }
+  const data = await finishRes.json();
+  return data.user as AuthUser;
+}
+
+// ─── Screen A: Biometric quick-unlock ────────────────────────────────────────
+function BiometricScreen({
+  username,
+  onSuccess,
+  onSwitchToPassword,
+}: {
+  username: string;
+  onSuccess: (user: AuthUser) => void;
+  onSwitchToPassword: () => void;
+}) {
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+
+  const trigger = useCallback(async () => {
+    setError("");
+    setBusy(true);
+    try {
+      const user = await doBiometricLogin(username);
+      localStorage.setItem(BIO_KEY, username);
+      onSuccess(user);
+    } catch (e: any) {
+      if (e?.name === "NotAllowedError") {
+        setError("Akses biometrik ditolak atau dibatalkan.");
+      } else {
+        setError(e?.message ?? "Gagal login biometrik");
+      }
+    } finally {
+      setBusy(false);
+    }
+  }, [username, onSuccess]);
+
+  // Auto-trigger once on mount
+  useEffect(() => { void trigger(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  return (
+    <div className="space-y-5 text-center">
+      <p className="text-sm text-muted-foreground">
+        Selamat datang kembali,{" "}
+        <span className="font-semibold text-foreground">{username}</span>
+      </p>
+
+      <button
+        onClick={trigger}
+        disabled={busy}
+        className="mx-auto flex w-20 h-20 rounded-full border-2 items-center justify-center transition-all
+          border-primary bg-primary/10 hover:bg-primary/20 disabled:opacity-60"
+      >
+        {busy
+          ? <Loader2 className="w-9 h-9 text-primary animate-spin" />
+          : <Fingerprint className="w-9 h-9 text-primary" />}
+      </button>
+
+      <p className="text-xs text-muted-foreground">
+        {busy ? "Menunggu verifikasi biometrik…" : "Ketuk untuk buka kunci dengan biometrik"}
+      </p>
+
+      {error && (
+        <div className="bg-destructive/10 border border-destructive/30 text-destructive text-xs rounded-lg px-3 py-2.5 flex items-start gap-2 text-left">
+          <AlertCircle className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" /><span>{error}</span>
+        </div>
+      )}
+
+      <button
+        onClick={onSwitchToPassword}
+        className="text-xs text-muted-foreground hover:text-foreground transition-colors py-1"
+      >
+        Masuk dengan password
+      </button>
+    </div>
+  );
+}
+
+// ─── Screen B: Password login ─────────────────────────────────────────────────
+function PasswordLoginForm({
+  onSuccess,
+}: {
+  onSuccess: (user: AuthUser) => void;
+}) {
   const [username, setUsername] = useState("admin");
   const [password, setPassword] = useState("");
   const [showPw, setShowPw] = useState(false);
@@ -80,8 +192,14 @@ function PasswordLoginForm({ onSuccess }: { onSuccess: (user: AuthUser) => void 
   );
 }
 
-// ─── Step 2: Setup Wizard (change password + register biometric) ───────────────
-function SetupWizard({ user, onComplete }: { user: AuthUser; onComplete: () => void }) {
+// ─── Screen C: Setup wizard (change password + biometric) ─────────────────────
+function SetupWizard({
+  user,
+  onComplete,
+}: {
+  user: AuthUser;
+  onComplete: () => void;
+}) {
   const [step, setStep] = useState<"password" | "biometric" | "done">("password");
   const [newPw, setNewPw] = useState("");
   const [confirmPw, setConfirmPw] = useState("");
@@ -138,6 +256,8 @@ function SetupWizard({ user, onComplete }: { user: AuthUser; onComplete: () => v
       });
       if (!finishRes.ok) { const d = await finishRes.json(); throw new Error(d.error); }
 
+      // Mark this device as biometric-enabled
+      localStorage.setItem(BIO_KEY, user.username);
       setStep("done");
       setTimeout(onComplete, 1200);
     } catch (err) {
@@ -262,24 +382,47 @@ function SetupWizard({ user, onComplete }: { user: AuthUser; onComplete: () => v
 
 // ─── Main export ───────────────────────────────────────────────────────────────
 export default function LoginPage() {
-  const queryClient = useQueryClient();
-  const [loggedInUser, setLoggedInUser] = useState<AuthUser | null>(null);
+  const { refetch } = useAuth();
 
-  const handlePasswordSuccess = (user: AuthUser) => {
-    setLoggedInUser(user);
-    // If no setup needed, go straight in
-    if (!user.mustChangePassword) {
-      queryClient.invalidateQueries({ queryKey: ["auth"] });
+  // Which screen to show
+  const [screen, setScreen] = useState<"biometric" | "password" | "setup">("password");
+  const [setupUser, setSetupUser] = useState<AuthUser | null>(null);
+  const [savedUsername, setSavedUsername] = useState<string | null>(null);
+
+  // On mount: if this device had biometric registered, show biometric screen
+  useEffect(() => {
+    const stored = localStorage.getItem(BIO_KEY);
+    if (stored) {
+      setSavedUsername(stored);
+      setScreen("biometric");
     }
-  };
+  }, []);
 
-  const handleSetupComplete = () => {
-    queryClient.invalidateQueries({ queryKey: ["auth"] });
-  };
+  // Called after any successful login (password or biometric)
+  const handleLoginSuccess = useCallback(async (user: AuthUser) => {
+    localStorage.setItem(BIO_KEY, user.username);
+    if (user.mustChangePassword) {
+      setSetupUser(user);
+      setScreen("setup");
+    } else {
+      await refetch(); // triggers Router → dashboard
+    }
+  }, [refetch]);
 
-  const showSetup = loggedInUser && loggedInUser.mustChangePassword;
-  const title = showSetup ? "Setup Akun" : "Selamat Datang";
-  const subtitle = showSetup ? "Selesaikan setup sebelum melanjutkan" : "Login ke sistem management";
+  // Called after setup wizard finishes
+  const handleSetupComplete = useCallback(async () => {
+    await refetch(); // triggers Router → dashboard
+  }, [refetch]);
+
+  const title =
+    screen === "setup" ? "Setup Akun" :
+    screen === "biometric" ? "Buka Kunci" :
+    "Selamat Datang";
+
+  const subtitle =
+    screen === "setup" ? "Selesaikan setup sebelum melanjutkan" :
+    screen === "biometric" ? "Verifikasi identitas Anda" :
+    "Login ke sistem management";
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
@@ -297,10 +440,20 @@ export default function LoginPage() {
           <h2 className="text-center text-lg font-semibold text-foreground mb-1">{title}</h2>
           <p className="text-center text-xs text-muted-foreground mb-6">{subtitle}</p>
 
-          {showSetup ? (
-            <SetupWizard user={loggedInUser} onComplete={handleSetupComplete} />
-          ) : (
-            <PasswordLoginForm onSuccess={handlePasswordSuccess} />
+          {screen === "biometric" && savedUsername && (
+            <BiometricScreen
+              username={savedUsername}
+              onSuccess={handleLoginSuccess}
+              onSwitchToPassword={() => setScreen("password")}
+            />
+          )}
+
+          {screen === "password" && (
+            <PasswordLoginForm onSuccess={handleLoginSuccess} />
+          )}
+
+          {screen === "setup" && setupUser && (
+            <SetupWizard user={setupUser} onComplete={handleSetupComplete} />
           )}
         </div>
 
