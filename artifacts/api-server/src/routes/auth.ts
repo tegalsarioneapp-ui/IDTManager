@@ -53,6 +53,9 @@ router.post("/auth/login/password", async (req, res): Promise<void> => {
   if (!ok) { res.status(401).json({ error: "Username atau password salah" }); return; }
 
   req.session.userId = user.id;
+  await new Promise<void>((resolve, reject) =>
+    req.session.save((err) => (err ? reject(err) : resolve()))
+  );
   res.json({ ok: true, user: safeUser(user) });
 });
 
