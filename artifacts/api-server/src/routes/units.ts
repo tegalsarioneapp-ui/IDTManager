@@ -220,6 +220,35 @@ router.post("/units/:id/jual", async (req, res): Promise<void> => {
   res.json(MarkSoldResponse.parse(unit));
 });
 
+// PATCH /units/:id/jual — edit data penjualan (namaPembeli, nomorPembeli, hargaJual, tanggalJual)
+router.patch("/units/:id/jual", async (req, res): Promise<void> => {
+  const id = parseInt(String(req.params.id));
+  if (isNaN(id)) { res.status(400).json({ error: "ID tidak valid" }); return; }
+
+  const { hargaJual, namaPembeli, nomorPembeli, tanggalJual } = req.body as {
+    hargaJual?: number; namaPembeli?: string; nomorPembeli?: string; tanggalJual?: string;
+  };
+
+  const updateData: Partial<typeof unitsTable.$inferInsert> = {};
+  if (typeof hargaJual === "number" && hargaJual > 0) updateData.hargaJual = hargaJual;
+  if (typeof namaPembeli === "string") updateData.namaPembeli = namaPembeli;
+  if (typeof nomorPembeli === "string") updateData.nomorPembeli = nomorPembeli;
+  if (typeof tanggalJual === "string" && tanggalJual) updateData.tanggalJual = new Date(tanggalJual);
+
+  if (Object.keys(updateData).length === 0) {
+    res.status(400).json({ error: "Tidak ada data yang diupdate" }); return;
+  }
+
+  const [unit] = await db
+    .update(unitsTable)
+    .set(updateData)
+    .where(and(eq(unitsTable.id, id), eq(unitsTable.status, "TERJUAL")))
+    .returning();
+
+  if (!unit) { res.status(404).json({ error: "Unit tidak ditemukan atau bukan status TERJUAL" }); return; }
+  res.json(unit);
+});
+
 // GET /units/:id/caption
 router.get("/units/:id/caption", async (req, res): Promise<void> => {
   const raw = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;

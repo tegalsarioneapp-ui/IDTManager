@@ -1,7 +1,7 @@
 import { useGetUnitInvoice, getGetUnitInvoiceQueryKey } from "@workspace/api-client-react";
 import { formatRupiah, formatDate } from "@/lib/utils";
 import * as Dialog from "@radix-ui/react-dialog";
-import { X, Printer, FileText } from "lucide-react";
+import { X, Printer, FileText, MessageCircle } from "lucide-react";
 import { useRef } from "react";
 
 interface Props {
@@ -62,6 +62,30 @@ export function InvoicePrint({ unitId, onClose }: Props) {
     setTimeout(() => { win.print(); }, 400);
   };
 
+  const handleWhatsApp = () => {
+    if (!data) return;
+    const buyerPhone = data.unit.nomorPembeli?.replace(/\D/g, "").replace(/^0/, "62") ?? "";
+    const msg = [
+      `Halo ${data.unit.namaPembeli || "Pembeli"}! 👋`,
+      ``,
+      `Terima kasih telah berbelanja di *${data.store.namaToko || "INDO DUTA TECH"}*.`,
+      ``,
+      `📄 *Invoice:* ${data.nomorInvoice}`,
+      `📱 *Unit:* ${data.unit.tipe}`,
+      `📅 *Tanggal:* ${formatDate(data.tanggal)}`,
+      `💰 *Total:* ${formatRupiah(data.total)}`,
+      `✅ *Status:* LUNAS`,
+      ``,
+      `Semoga puas dengan pembeliannya! 😊`,
+      data.store.whatsapp ? `\nInfo & garansi: wa.me/${data.store.whatsapp.replace(/\D/g, "").replace(/^0/, "62")}` : "",
+    ].filter(l => l !== undefined).join("\n").trim();
+
+    const url = buyerPhone
+      ? `https://wa.me/${buyerPhone}?text=${encodeURIComponent(msg)}`
+      : `https://wa.me/?text=${encodeURIComponent(msg)}`;
+    window.open(url, "_blank");
+  };
+
   return (
     <Dialog.Root open={!!unitId} onOpenChange={(open) => !open && onClose()}>
       <Dialog.Portal>
@@ -72,6 +96,15 @@ export function InvoicePrint({ unitId, onClose }: Props) {
               <FileText className="w-5 h-5 text-primary" /> Invoice Penjualan
             </Dialog.Title>
             <div className="flex items-center gap-2">
+              {data?.unit.nomorPembeli && (
+                <button
+                  onClick={handleWhatsApp}
+                  className="flex items-center gap-2 px-3 py-2 bg-emerald-600 text-white font-semibold rounded-lg hover:bg-emerald-500 transition-colors text-sm"
+                  title="Kirim invoice ke pembeli via WhatsApp"
+                >
+                  <MessageCircle className="w-4 h-4" /> WhatsApp
+                </button>
+              )}
               <button
                 onClick={handlePrint}
                 className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground font-semibold rounded-lg hover:bg-primary/90 transition-colors text-sm"

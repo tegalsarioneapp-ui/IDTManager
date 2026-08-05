@@ -1,7 +1,7 @@
 import { useGetUnitKuitansi, getGetUnitKuitansiQueryKey } from "@workspace/api-client-react";
 import { formatRupiah, formatDate } from "@/lib/utils";
 import * as Dialog from "@radix-ui/react-dialog";
-import { X, Printer, Receipt } from "lucide-react";
+import { X, Printer, Receipt, MessageCircle } from "lucide-react";
 import { useRef } from "react";
 
 interface Props {
@@ -58,6 +58,31 @@ export function KuitansiPrint({ unitId, onClose }: Props) {
     setTimeout(() => { win.print(); }, 400);
   };
 
+  const handleWhatsApp = () => {
+    if (!data) return;
+    const buyerPhone = data.unit.nomorPembeli?.replace(/\D/g, "").replace(/^0/, "62") ?? "";
+    const terbilangCap = data.terbilang.charAt(0).toUpperCase() + data.terbilang.slice(1);
+    const msg = [
+      `Halo ${data.unit.namaPembeli || "Pembeli"}! 👋`,
+      ``,
+      `Berikut kuitansi pembayaran Anda dari *${data.store.namaToko || "INDO DUTA TECH"}*:`,
+      ``,
+      `📝 *No. Kuitansi:* ${data.nomorKuitansi}`,
+      `📱 *Item:* ${data.unit.tipe}`,
+      `📅 *Tanggal:* ${formatDate(data.tanggal)}`,
+      `💰 *Jumlah:* ${formatRupiah(data.jumlah)}`,
+      `✍️ *Terbilang:* ${terbilangCap}`,
+      ``,
+      `Terima kasih telah berbelanja! 😊`,
+      data.store.whatsapp ? `\nInfo & garansi: wa.me/${data.store.whatsapp.replace(/\D/g, "").replace(/^0/, "62")}` : "",
+    ].filter(l => l !== undefined).join("\n").trim();
+
+    const url = buyerPhone
+      ? `https://wa.me/${buyerPhone}?text=${encodeURIComponent(msg)}`
+      : `https://wa.me/?text=${encodeURIComponent(msg)}`;
+    window.open(url, "_blank");
+  };
+
   return (
     <Dialog.Root open={!!unitId} onOpenChange={(open) => !open && onClose()}>
       <Dialog.Portal>
@@ -68,6 +93,15 @@ export function KuitansiPrint({ unitId, onClose }: Props) {
               <Receipt className="w-5 h-5 text-primary" /> Kuitansi Penjualan
             </Dialog.Title>
             <div className="flex items-center gap-2">
+              {data?.unit.nomorPembeli && (
+                <button
+                  onClick={handleWhatsApp}
+                  className="flex items-center gap-2 px-3 py-2 bg-emerald-600 text-white font-semibold rounded-lg hover:bg-emerald-500 transition-colors text-sm"
+                  title="Kirim kuitansi ke pembeli via WhatsApp"
+                >
+                  <MessageCircle className="w-4 h-4" /> WhatsApp
+                </button>
+              )}
               <button
                 onClick={handlePrint}
                 className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground font-semibold rounded-lg hover:bg-primary/90 transition-colors text-sm"
