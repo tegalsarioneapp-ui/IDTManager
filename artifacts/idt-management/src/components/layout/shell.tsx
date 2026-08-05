@@ -16,6 +16,7 @@ import {
   ChevronDown,
   ChevronRight,
   X,
+  LayoutList,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useListUnits } from "@workspace/api-client-react";
@@ -27,6 +28,7 @@ const MANAJEMEN_PATHS = ["/beli", "/qc", "/jual", "/terjual"] as const;
 const PROFIL_PATHS = ["/sosmed", "/settings"] as const;
 
 const MANAJEMEN_ITEMS = [
+  { href: "/daftar", label: "Daftar Unit", icon: LayoutList },
   { href: "/beli", label: "Beli Unit", icon: ShoppingCart },
   { href: "/qc", label: "Quality Control", icon: ClipboardCheck, badgeKey: "qc" },
   { href: "/jual", label: "Jual", icon: Tags },
