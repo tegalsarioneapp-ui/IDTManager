@@ -430,12 +430,9 @@ components:
     QcInput:
       type: object
       required:
-        - biayaQc
         - fisik
         - baterai
       properties:
-        biayaQc:
-          type: number
         fisik:
           type: string
         baterai:
@@ -444,6 +441,34 @@ components:
           type: string
           nullable: true
           description: Optional extra apps installed during QC
+        checklistItems:
+          type: array
+          description: Detailed checklist records grouped by professional QC categories
+          items:
+            type: object
+            required:
+              - category
+              - itemKey
+              - itemLabel
+              - status
+            properties:
+              category:
+                type: string
+                enum: [PHYSICAL, DISPLAY, HARDWARE_IO, PERFORMANCE_SOFTWARE]
+              itemKey:
+                type: string
+              itemLabel:
+                type: string
+              status:
+                type: string
+                enum: [PASS, FAIL, N/A]
+              sparepartId:
+                type: number
+                nullable: true
+                description: Required when status is FAIL
+              notes:
+                type: string
+                nullable: true
 
     JualInput:
       type: object

@@ -53,12 +53,42 @@ export interface UnitUpdate {
   hargaBeli?: number;
 }
 
+export type QcInputChecklistItemsItemCategory = typeof QcInputChecklistItemsItemCategory[keyof typeof QcInputChecklistItemsItemCategory];
+
+
+export const QcInputChecklistItemsItemCategory = {
+  PHYSICAL: 'PHYSICAL',
+  DISPLAY: 'DISPLAY',
+  HARDWARE_IO: 'HARDWARE_IO',
+  PERFORMANCE_SOFTWARE: 'PERFORMANCE_SOFTWARE',
+} as const;
+
+export type QcInputChecklistItemsItemStatus = typeof QcInputChecklistItemsItemStatus[keyof typeof QcInputChecklistItemsItemStatus];
+
+
+export const QcInputChecklistItemsItemStatus = {
+  PASS: 'PASS',
+  FAIL: 'FAIL',
+  'N/A': 'N/A',
+} as const;
+
+export type QcInputChecklistItemsItem = {
+  category: QcInputChecklistItemsItemCategory;
+  itemKey: string;
+  itemLabel: string;
+  status: QcInputChecklistItemsItemStatus;
+  /** Required when status is FAIL */
+  sparepartId?: number | null;
+  notes?: string | null;
+};
+
 export interface QcInput {
-  biayaQc: number;
   fisik: string;
   baterai: number;
   /** Optional extra apps installed during QC */
   appTambahan?: string | null;
+  /** Detailed checklist records grouped by professional QC categories */
+  checklistItems?: QcInputChecklistItemsItem[];
 }
 
 export interface JualInput {

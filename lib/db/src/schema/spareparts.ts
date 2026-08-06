@@ -9,11 +9,13 @@ export const sparepartsTable = pgTable(
     sku: text("sku").notNull().unique(),
     jenisBarang: text("jenis_barang").notNull(),
     hargaBeli: integer("harga_beli").notNull(),
+    stock: integer("stock").notNull().default(1),
     tanggal: timestamp("tanggal").notNull().defaultNow(),
     createdAt: timestamp("created_at").notNull().defaultNow(),
   },
   (t) => [
     index("spareparts_sku_idx").on(t.sku),
+    index("spareparts_jenis_barang_idx").on(t.jenisBarang),
     index("spareparts_tanggal_idx").on(t.tanggal),
   ],
 );

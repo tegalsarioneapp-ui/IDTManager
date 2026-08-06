@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { desc, eq, sql } from "drizzle-orm";
+import { and, desc, eq, gt, sql } from "drizzle-orm";
 import { db, qcUsageTable, sparepartsTable } from "@workspace/db";
 import { z } from "zod";
 
@@ -8,6 +8,7 @@ const router: IRouter = Router();
 const createSparepartSchema = z.object({
   jenisBarang: z.string().min(1, "Jenis Barang wajib diisi"),
   hargaBeli: z.coerce.number().min(0, "Harga Beli tidak valid"),
+  stock: z.coerce.number().int().min(1, "Stock minimal 1").optional(),
   tanggal: z.string().optional(),
 });
 
@@ -23,6 +24,7 @@ const sparepartResponseSchema = z.object({
   sku: z.string(),
   jenisBarang: z.string(),
   hargaBeli: z.number(),
+  stock: z.number(),
   tanggal: z.string(),
   createdAt: z.string(),
 });
@@ -109,6 +111,7 @@ router.post("/spareparts", async (req, res): Promise<void> => {
       sku,
       jenisBarang: parsed.data.jenisBarang,
       hargaBeli: parsed.data.hargaBeli,
+      stock: parsed.data.stock ?? 1,
       tanggal,
     })
     .returning();
@@ -128,29 +131,45 @@ router.post("/spareparts/qc", async (req, res): Promise<void> => {
     return;
   }
 
-  const [sparepart] = await db
-    .select()
-    .from(sparepartsTable)
-    .where(eq(sparepartsTable.id, parsed.data.sparepartId));
-
-  if (!sparepart) {
-    res.status(404).json({ error: "Sparepart tidak ditemukan" });
-    return;
-  }
-
   const tanggalPenggantian = parsed.data.tanggalPenggantian
     ? new Date(parsed.data.tanggalPenggantian)
     : new Date();
 
-  const [created] = await db
-    .insert(qcUsageTable)
-    .values({
-      sparepartId: parsed.data.sparepartId,
-      hargaPenggantian: parsed.data.hargaPenggantian,
-      tanggalPenggantian,
-      catatan: parsed.data.catatan ?? null,
-    })
-    .returning();
+  let created: typeof qcUsageTable.$inferSelect | undefined;
+
+  try {
+    created = await db.transaction(async (tx) => {
+      const [sparepart] = await tx
+        .select()
+        .from(sparepartsTable)
+        .where(and(eq(sparepartsTable.id, parsed.data.sparepartId), gt(sparepartsTable.stock, 0)));
+
+      if (!sparepart) {
+        throw new Error("Sparepart tidak ditemukan atau stock habis");
+      }
+
+      await tx
+        .update(sparepartsTable)
+        .set({ stock: sql`${sparepartsTable.stock} - 1` })
+        .where(eq(sparepartsTable.id, parsed.data.sparepartId));
+
+      const [inserted] = await tx
+        .insert(qcUsageTable)
+        .values({
+          sparepartId: parsed.data.sparepartId,
+          hargaPenggantian: parsed.data.hargaPenggantian,
+          tanggalPenggantian,
+          catatan: parsed.data.catatan ?? null,
+        })
+        .returning();
+
+      return inserted;
+    });
+  } catch (error) {
+    const message = (error as Error).message;
+    res.status(message.includes("stock habis") ? 400 : 404).json({ error: message });
+    return;
+  }
 
   res.status(201).json(qcUsageResponseSchema.parse({
     ...created,

@@ -15,6 +15,7 @@ import { Wrench, CalendarDays } from "lucide-react";
 const buySparepartSchema = z.object({
   jenisBarang: z.string().min(1, "Jenis Barang wajib diisi"),
   hargaBeli: z.coerce.number().min(0, "Harga Beli tidak valid"),
+  stock: z.coerce.number().int().min(1, "Stock minimal 1"),
   tanggal: z.string().optional(),
 });
 
@@ -33,6 +34,7 @@ type Sparepart = {
   sku: string;
   jenisBarang: string;
   hargaBeli: number;
+  stock: number;
   tanggal: string;
 };
 
@@ -54,6 +56,7 @@ export default function SparepartsPage() {
     defaultValues: {
       jenisBarang: "",
       hargaBeli: 0,
+      stock: 1,
       tanggal: new Date().toISOString().slice(0, 10),
     },
   });
@@ -105,7 +108,7 @@ export default function SparepartsPage() {
 
       const created = await res.json();
       toast({ title: "Sparepart disimpan", description: `${created.jenisBarang} berhasil ditambahkan dengan SKU ${created.sku}.` });
-      buyForm.reset({ jenisBarang: "", hargaBeli: 0, tanggal: new Date().toISOString().slice(0, 10) });
+      buyForm.reset({ jenisBarang: "", hargaBeli: 0, stock: 1, tanggal: new Date().toISOString().slice(0, 10) });
       await handleLoadSpareparts();
       queryClient.invalidateQueries({ queryKey: getListUnitsQueryKey() });
     } catch (error) {
@@ -187,13 +190,19 @@ export default function SparepartsPage() {
 
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
+                <Label htmlFor="stock">Jumlah Stock</Label>
+                <Input id="stock" type="number" min={1} placeholder="1" {...buyForm.register("stock")} />
+                {buyForm.formState.errors.stock ? <p className="text-destructive text-sm">{buyForm.formState.errors.stock.message}</p> : null}
+              </div>
+              <div className="space-y-2">
                 <Label htmlFor="tanggal">Tanggal</Label>
                 <Input id="tanggal" type="date" {...buyForm.register("tanggal")} />
               </div>
-              <div className="space-y-2">
-                <Label>SKU Backend</Label>
-                <div className="rounded-md border border-border bg-secondary px-4 py-3 text-sm text-muted-foreground">Dihasilkan otomatis setelah simpan</div>
-              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label>SKU Backend</Label>
+              <div className="rounded-md border border-border bg-secondary px-4 py-3 text-sm text-muted-foreground">Dihasilkan otomatis setelah simpan</div>
             </div>
 
             <Button type="submit">Simpan Pembelian</Button>
@@ -280,6 +289,7 @@ export default function SparepartsPage() {
                   <div className="text-sm text-muted-foreground">{formatDate(item.tanggal)}</div>
                 </div>
                 <div className="mt-3 text-sm text-foreground">Harga Beli: {formatRupiah(item.hargaBeli)}</div>
+                <div className="mt-1 text-xs text-muted-foreground">Stock tersedia: {item.stock}</div>
               </div>
             ))}
           </div>

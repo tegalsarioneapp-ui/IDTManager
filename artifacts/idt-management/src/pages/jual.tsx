@@ -5,13 +5,14 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Tags, Printer, DollarSign, Search, Zap, CheckCircle2, Battery, ShieldCheck, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import * as Dialog from "@radix-ui/react-dialog";
+import { useLocation } from "wouter";
 
 export default function JualList() {
   const { data: units, isLoading, error } = useListUnits({ status: "READY" });
   const [search, setSearch] = useState("");
   const [selectedUnit, setSelectedUnit] = useState<number | null>(null);
-  const [printUnitId, setPrintUnitId] = useState<number | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
+  const [, setLocation] = useLocation();
   const deleteUnit = useDeleteUnit();
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -36,15 +37,8 @@ export default function JualList() {
     }
   };
 
-  useEffect(() => {
-    const handleAfterPrint = () => setPrintUnitId(null);
-    window.addEventListener("afterprint", handleAfterPrint);
-    return () => window.removeEventListener("afterprint", handleAfterPrint);
-  }, []);
-
   const handlePrint = (id: number) => {
-    setPrintUnitId(id);
-    setTimeout(() => window.print(), 100);
+    setLocation(`/print-label/${id}`);
   };
 
   const filteredUnits = units?.filter(u => u.tipe.toLowerCase().includes(search.toLowerCase()) || u.spek.toLowerCase().includes(search.toLowerCase()));
@@ -160,34 +154,6 @@ export default function JualList() {
                     </button>
                   </div>
 
-                  {/* Hidden Print Container for each unit (only visible when printing) */}
-                  {printUnitId === unit.id && (
-                    <div className="hidden print:block absolute top-0 left-0 w-full h-full bg-white text-black p-8 z-50" id="print-area">
-                      <div className="print-border rounded-2xl overflow-hidden max-w-sm mx-auto shadow-2xl mt-12">
-                        <div className="print-bg-gold text-black text-center py-4 px-6 font-black text-2xl tracking-tighter uppercase">
-                          Indo Duta Tech
-                        </div>
-                        <div className="p-6 bg-white">
-                          <h2 className="text-2xl font-bold mb-4 leading-tight">{unit.tipe}</h2>
-                          
-                          <div className="space-y-3 text-sm mb-6 font-medium">
-                            <div className="flex pb-2 border-b border-gray-200"><span className="w-24 text-gray-500 font-normal">Spek:</span> <span className="flex-1">{unit.spek}</span></div>
-                            <div className="flex pb-2 border-b border-gray-200"><span className="w-24 text-gray-500 font-normal">Baterai:</span> <span className="flex-1 text-emerald-600">{unit.baterai}% Health</span></div>
-                            <div className="flex pb-2 border-b border-gray-200"><span className="w-24 text-gray-500 font-normal">Fisik:</span> <span className="flex-1">{unit.fisik}</span></div>
-                            <div className="flex pb-2 border-b border-gray-200"><span className="w-24 text-gray-500 font-normal">Kelengkapan:</span> <span className="flex-1">{unit.kelengkapan}</span></div>
-                            {unit.appTambahan && (
-                              <div className="flex pb-2 border-b border-gray-200"><span className="w-24 text-gray-500 font-normal">Software:</span> <span className="flex-1">{unit.appTambahan}</span></div>
-                            )}
-                          </div>
-
-                          <div className="text-center pt-2">
-                            <div className="text-sm text-gray-500 mb-1">HARGA SPESIAL</div>
-                            <div className="text-3xl font-black text-black tracking-tight">{formatRupiah(estimasi)}</div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
                 </div>
               );
             })}

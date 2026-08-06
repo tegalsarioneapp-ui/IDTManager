@@ -156,10 +156,17 @@ export const CompleteQcParams = zod.object({
 })
 
 export const CompleteQcBody = zod.object({
-  "biayaQc": zod.number(),
   "fisik": zod.string(),
   "baterai": zod.number(),
-  "appTambahan": zod.string().nullish().describe('Optional extra apps installed during QC')
+  "appTambahan": zod.string().nullish().describe('Optional extra apps installed during QC'),
+  "checklistItems": zod.array(zod.object({
+  "category": zod.enum(['PHYSICAL', 'DISPLAY', 'HARDWARE_IO', 'PERFORMANCE_SOFTWARE']),
+  "itemKey": zod.string(),
+  "itemLabel": zod.string(),
+  "status": zod.enum(['PASS', 'FAIL', 'N/A']),
+  "sparepartId": zod.number().nullish().describe('Required when status is FAIL'),
+  "notes": zod.string().nullish()
+})).optional().describe('Detailed checklist records grouped by professional QC categories')
 })
 
 export const CompleteQcResponse = zod.object({

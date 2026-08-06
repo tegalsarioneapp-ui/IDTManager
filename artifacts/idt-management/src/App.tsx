@@ -19,6 +19,7 @@ import Sosmed from '@/pages/sosmed';
 import SettingsPage from '@/pages/settings';
 import DaftarUnit from '@/pages/daftar-unit';
 import Spareparts from '@/pages/spareparts';
+import PrintLabelPage from '@/pages/print-label';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -49,6 +50,15 @@ function Router() {
 
   if (!isLoggedIn) {
     return <LoginPage />;
+  }
+
+  if (window.location.pathname.includes('/print-label/')) {
+    return (
+      <Switch>
+        <Route path="/print-label/:id" component={PrintLabelPage} />
+        <Redirect to="/jual" />
+      </Switch>
+    );
   }
 
   return (

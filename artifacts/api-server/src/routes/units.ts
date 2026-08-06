@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
-import { eq, and, desc, count, sum, sql } from "drizzle-orm";
-import { db, unitsTable, storeSettingsTable } from "@workspace/db";
+import { eq, and, desc, count, sum, sql, gt } from "drizzle-orm";
+import { db, unitsTable, storeSettingsTable, qcChecklistResultsTable, sparepartsTable } from "@workspace/db";
 import {
   ListUnitsQueryParams,
   CreateUnitBody,
@@ -165,24 +165,115 @@ router.post("/units/:id/qc", async (req, res): Promise<void> => {
     return;
   }
 
-  const [unit] = await db
-    .update(unitsTable)
-    .set({
-      baterai: parsed.data.baterai,
-      fisik: parsed.data.fisik,
-      biayaQc: parsed.data.biayaQc,
-      appTambahan: parsed.data.appTambahan ?? null,
-      status: "READY",
-    })
-    .where(and(eq(unitsTable.id, params.data.id), eq(unitsTable.status, "PROSES")))
-    .returning();
+  try {
+    const unit = await db.transaction(async (tx) => {
+      const [existingUnit] = await tx
+        .select()
+        .from(unitsTable)
+        .where(and(eq(unitsTable.id, params.data.id), eq(unitsTable.status, "PROSES")));
 
-  if (!unit) {
-    res.status(404).json({ error: "Unit tidak ditemukan atau statusnya bukan PROSES" });
-    return;
+      if (!existingUnit) {
+        throw new Error("Unit tidak ditemukan atau statusnya bukan PROSES");
+      }
+
+      const checklistItems = parsed.data.checklistItems ?? [];
+
+      for (const item of checklistItems) {
+        if (item.status === "FAIL" && !item.sparepartId) {
+          throw new Error(`Checklist FAIL pada \"${item.itemLabel}\" wajib memilih sparepart`);
+        }
+      }
+
+      const sparepartUsageCount = new Map<number, number>();
+      for (const item of checklistItems) {
+        if (item.status === "FAIL" && item.sparepartId) {
+          const current = sparepartUsageCount.get(item.sparepartId) ?? 0;
+          sparepartUsageCount.set(item.sparepartId, current + 1);
+        }
+      }
+
+      const sparepartIds = Array.from(sparepartUsageCount.keys());
+      const sparepartCostById = new Map<number, number>();
+
+      for (const sparepartId of sparepartIds) {
+        const [sparepart] = await tx
+          .select()
+          .from(sparepartsTable)
+          .where(and(eq(sparepartsTable.id, sparepartId), gt(sparepartsTable.stock, 0)));
+
+        if (!sparepart) {
+          throw new Error(`Sparepart ID ${sparepartId} tidak ditemukan atau stock habis`);
+        }
+
+        const usedCount = sparepartUsageCount.get(sparepartId) ?? 0;
+        if (sparepart.stock < usedCount) {
+          throw new Error(`Stock sparepart ${sparepart.sku} tidak cukup (tersisa ${sparepart.stock}, dibutuhkan ${usedCount})`);
+        }
+
+        sparepartCostById.set(sparepart.id, sparepart.hargaBeli);
+      }
+
+      for (const [sparepartId, usedCount] of sparepartUsageCount.entries()) {
+        await tx
+          .update(sparepartsTable)
+          .set({ stock: sql`${sparepartsTable.stock} - ${usedCount}` })
+          .where(eq(sparepartsTable.id, sparepartId));
+      }
+
+      await tx
+        .delete(qcChecklistResultsTable)
+        .where(eq(qcChecklistResultsTable.unitId, params.data.id));
+
+      if (checklistItems.length > 0) {
+        await tx.insert(qcChecklistResultsTable).values(
+          checklistItems.map((item) => ({
+            unitId: params.data.id,
+            category: item.category,
+            itemKey: item.itemKey,
+            itemLabel: item.itemLabel,
+            status: item.status,
+            notes: item.notes ?? null,
+            sparepartId: item.status === "FAIL" ? (item.sparepartId ?? null) : null,
+            sparepartUnitCost:
+              item.status === "FAIL" && item.sparepartId
+                ? (sparepartCostById.get(item.sparepartId) ?? null)
+                : null,
+          })),
+        );
+      }
+
+      const biayaQc = checklistItems.reduce((total, item) => {
+        if (item.status !== "FAIL" || !item.sparepartId) {
+          return total;
+        }
+        return total + (sparepartCostById.get(item.sparepartId) ?? 0);
+      }, 0);
+
+      const [updated] = await tx
+        .update(unitsTable)
+        .set({
+          baterai: parsed.data.baterai,
+          fisik: parsed.data.fisik,
+          biayaQc,
+          appTambahan: parsed.data.appTambahan ?? null,
+          status: "READY",
+        })
+        .where(eq(unitsTable.id, params.data.id))
+        .returning();
+
+      if (!updated) {
+        throw new Error("Gagal memperbarui unit setelah QC");
+      }
+
+      return updated;
+    });
+
+    res.json(CompleteQcResponse.parse(unit));
+  } catch (error) {
+    const message = (error as Error).message;
+    const status = message.includes("tidak ditemukan") || message.includes("statusnya") ? 404 : 400;
+    res.status(status).json({ error: message });
   }
-
-  res.json(CompleteQcResponse.parse(unit));
 });
 
 // POST /units/:id/jual

@@ -5,11 +5,13 @@
  * INDO DUTA TECH - Premium Management System API
  * OpenAPI spec version: 0.1.0
  */
+import type { QcInputChecklistItemsItem } from './qcInputChecklistItemsItem';
 
 export interface QcInput {
-  biayaQc: number;
   fisik: string;
   baterai: number;
   /** Optional extra apps installed during QC */
   appTambahan?: string | null;
+  /** Detailed checklist records grouped by professional QC categories */
+  checklistItems?: QcInputChecklistItemsItem[];
 }
