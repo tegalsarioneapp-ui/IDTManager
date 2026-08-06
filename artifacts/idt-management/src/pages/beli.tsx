@@ -1,15 +1,20 @@
+import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useCreateUnit } from "@workspace/api-client-react";
 import { useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
-import { Laptop, Cpu, AlertCircle, Package, DollarSign } from "lucide-react";
+import { Laptop, Cpu, AlertCircle, Package, DollarSign, MemoryStick, HardDrive, Monitor, ChevronsUpDown } from "lucide-react";
 import { formatRupiah } from "@/lib/utils";
 
 const formSchema = z.object({
   tipe: z.string().min(1, "Tipe wajib diisi"),
-  spek: z.string().min(1, "Spesifikasi wajib diisi"),
+  cpu: z.string().min(1, "CPU wajib diisi"),
+  ram: z.string().min(1, "RAM wajib diisi"),
+  storage: z.string().min(1, "Storage wajib diisi"),
+  gpu: z.string().min(1, "GPU wajib diisi"),
+  display: z.string().min(1, "Display wajib diisi"),
   minus: z.string().min(1, "Kondisi minus wajib diisi, tulis 'Mulus' jika tidak ada"),
   kelengkapan: z.string().min(1, "Kelengkapan wajib diisi"),
   hargaBeli: z.coerce.number().min(0, "Harga beli tidak valid"),
@@ -17,24 +22,146 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
+type MasterLaptopSuggestion = {
+  id: number;
+  brand: string;
+  model: string;
+  defaultCpu: string;
+  defaultRam: string;
+  defaultStorage: string;
+  defaultGpu: string;
+  defaultDisplay: string;
+};
+
+async function extractApiErrorMessage(res: Response, fallback: string): Promise<string> {
+  try {
+    const body = await res.json();
+    if (body && typeof body.error === "string" && body.error.trim().length > 0) {
+      return body.error;
+    }
+  } catch {
+    // Ignore invalid JSON body and use fallback.
+  }
+
+  return fallback;
+}
+
 export default function Beli() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const createUnit = useCreateUnit();
+  const modelSearchBoxRef = useRef<HTMLDivElement>(null);
+
+  const [modelSearchTerm, setModelSearchTerm] = useState("");
+  const [modelSuggestions, setModelSuggestions] = useState<MasterLaptopSuggestion[]>([]);
+  const [isSearchingModel, setIsSearchingModel] = useState(false);
+  const [modelSearchError, setModelSearchError] = useState<string | null>(null);
+  const [showModelSuggestion, setShowModelSuggestion] = useState(false);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       tipe: "",
-      spek: "",
+      cpu: "",
+      ram: "",
+      storage: "",
+      gpu: "",
+      display: "",
       minus: "",
       kelengkapan: "Unit, Charger",
       hargaBeli: 0,
     },
   });
 
+  const tipeValue = form.watch("tipe");
+
+  useEffect(() => {
+    setModelSearchTerm(tipeValue ?? "");
+  }, [tipeValue]);
+
+  useEffect(() => {
+    const trimmed = modelSearchTerm.trim();
+    if (trimmed.length < 2) {
+      setModelSuggestions([]);
+      setModelSearchError(null);
+      setIsSearchingModel(false);
+      return;
+    }
+
+    const controller = new AbortController();
+    const timeoutId = window.setTimeout(async () => {
+      setIsSearchingModel(true);
+      setModelSearchError(null);
+
+      try {
+        const params = new URLSearchParams({ q: trimmed, limit: "8" });
+        const res = await fetch(`/api/master-laptops/search?${params.toString()}`, {
+          credentials: "include",
+          signal: controller.signal,
+        });
+
+        if (!res.ok) {
+          throw new Error(await extractApiErrorMessage(res, "Gagal mencari model laptop"));
+        }
+
+        const data = (await res.json()) as MasterLaptopSuggestion[];
+        setModelSuggestions(data);
+      } catch (error) {
+        if (!controller.signal.aborted) {
+          setModelSuggestions([]);
+          setModelSearchError((error as Error)?.message ?? "Gagal mencari model laptop");
+        }
+      } finally {
+        if (!controller.signal.aborted) {
+          setIsSearchingModel(false);
+        }
+      }
+    }, 300);
+
+    return () => {
+      controller.abort();
+      window.clearTimeout(timeoutId);
+    };
+  }, [modelSearchTerm]);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (!modelSearchBoxRef.current) return;
+      if (!modelSearchBoxRef.current.contains(event.target as Node)) {
+        setShowModelSuggestion(false);
+      }
+    };
+
+    window.addEventListener("mousedown", handleClickOutside);
+    return () => window.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const handleSelectSuggestion = (item: MasterLaptopSuggestion) => {
+    form.setValue("tipe", `${item.brand} ${item.model}`, { shouldDirty: true, shouldValidate: true });
+    form.setValue("cpu", item.defaultCpu, { shouldDirty: true, shouldValidate: true });
+    form.setValue("ram", item.defaultRam, { shouldDirty: true, shouldValidate: true });
+    form.setValue("storage", item.defaultStorage, { shouldDirty: true, shouldValidate: true });
+    form.setValue("gpu", item.defaultGpu, { shouldDirty: true, shouldValidate: true });
+    form.setValue("display", item.defaultDisplay, { shouldDirty: true, shouldValidate: true });
+    setShowModelSuggestion(false);
+  };
+
   const onSubmit = (data: FormValues) => {
-    createUnit.mutate({ data }, {
+    const spek = [
+      `CPU: ${data.cpu}`,
+      `RAM: ${data.ram}`,
+      `Storage: ${data.storage}`,
+      `GPU: ${data.gpu}`,
+      `Display: ${data.display}`,
+    ].join(", ");
+
+    createUnit.mutate({ data: {
+      tipe: data.tipe,
+      spek,
+      minus: data.minus,
+      kelengkapan: data.kelengkapan,
+      hargaBeli: data.hargaBeli,
+    } }, {
       onSuccess: () => {
         toast({
           title: "Unit Berhasil Ditambahkan",
@@ -66,24 +193,110 @@ export default function Beli() {
             <label className="text-sm font-semibold flex items-center gap-2">
               <Laptop className="w-4 h-4 text-primary" /> Tipe Laptop
             </label>
-            <input 
-              {...form.register("tipe")} 
-              className="w-full bg-secondary border border-border rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
-              placeholder="Contoh: Asus VivoBook 14 X412FA"
-            />
+            <div className="relative" ref={modelSearchBoxRef}>
+              <input
+                value={tipeValue}
+                onChange={(event) => {
+                  form.setValue("tipe", event.target.value, { shouldDirty: true, shouldValidate: true });
+                  setShowModelSuggestion(true);
+                }}
+                onFocus={() => setShowModelSuggestion(true)}
+                className="w-full bg-secondary border border-border rounded-lg px-4 py-3 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+                placeholder="Ketik merek atau model, contoh: ThinkPad T14"
+              />
+              <ChevronsUpDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+
+              {showModelSuggestion ? (
+                <div className="absolute z-20 mt-2 w-full rounded-lg border border-border bg-card shadow-lg overflow-hidden">
+                  {isSearchingModel ? (
+                    <div className="px-4 py-3 text-xs text-muted-foreground">Mencari model...</div>
+                  ) : modelSuggestions.length > 0 ? (
+                    <div className="max-h-64 overflow-y-auto">
+                      {modelSuggestions.map((item) => (
+                        <button
+                          key={item.id}
+                          type="button"
+                          onClick={() => handleSelectSuggestion(item)}
+                          className="w-full text-left px-4 py-3 hover:bg-secondary/70 transition-colors border-b last:border-b-0 border-border"
+                        >
+                          <p className="text-sm font-semibold text-foreground">{item.brand} {item.model}</p>
+                          <p className="text-xs text-muted-foreground mt-0.5">{item.defaultCpu} • {item.defaultRam} • {item.defaultStorage}</p>
+                        </button>
+                      ))}
+                    </div>
+                  ) : modelSearchTerm.trim().length >= 2 ? (
+                    <div className="px-4 py-3 text-xs text-muted-foreground">Model tidak ditemukan</div>
+                  ) : (
+                    <div className="px-4 py-3 text-xs text-muted-foreground">Ketik minimal 2 karakter untuk mencari model</div>
+                  )}
+                </div>
+              ) : null}
+            </div>
+
+            {modelSearchError ? <p className="text-destructive text-xs">{modelSearchError}</p> : null}
             {form.formState.errors.tipe && <p className="text-destructive text-xs">{form.formState.errors.tipe.message}</p>}
           </div>
 
-          <div className="space-y-2">
-            <label className="text-sm font-semibold flex items-center gap-2">
-              <Cpu className="w-4 h-4 text-primary" /> Spesifikasi Utama
-            </label>
-            <textarea 
-              {...form.register("spek")} 
-              className="w-full bg-secondary border border-border rounded-lg px-4 py-3 text-sm min-h-[80px] focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
-              placeholder="Contoh: Core i5-8265U, RAM 8GB, SSD 512GB, Intel UHD"
-            />
-            {form.formState.errors.spek && <p className="text-destructive text-xs">{form.formState.errors.spek.message}</p>}
+          <div className="grid gap-3 md:grid-cols-2">
+            <div className="space-y-2">
+              <label className="text-sm font-semibold flex items-center gap-2">
+                <Cpu className="w-4 h-4 text-primary" /> CPU
+              </label>
+              <input
+                {...form.register("cpu")}
+                className="w-full bg-secondary border border-border rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+                placeholder="Contoh: Intel Core i5-1135G7"
+              />
+              {form.formState.errors.cpu && <p className="text-destructive text-xs">{form.formState.errors.cpu.message}</p>}
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-semibold flex items-center gap-2">
+                <MemoryStick className="w-4 h-4 text-primary" /> RAM
+              </label>
+              <input
+                {...form.register("ram")}
+              className="w-full bg-secondary border border-border rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+                placeholder="Contoh: 16GB DDR4"
+              />
+              {form.formState.errors.ram && <p className="text-destructive text-xs">{form.formState.errors.ram.message}</p>}
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-semibold flex items-center gap-2">
+                <HardDrive className="w-4 h-4 text-primary" /> Storage
+              </label>
+              <input
+                {...form.register("storage")}
+                className="w-full bg-secondary border border-border rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+                placeholder="Contoh: SSD 512GB NVMe"
+              />
+              {form.formState.errors.storage && <p className="text-destructive text-xs">{form.formState.errors.storage.message}</p>}
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-semibold flex items-center gap-2">
+                <Monitor className="w-4 h-4 text-primary" /> GPU
+              </label>
+              <input
+                {...form.register("gpu")}
+                className="w-full bg-secondary border border-border rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+                placeholder="Contoh: Intel Iris Xe"
+              />
+              {form.formState.errors.gpu && <p className="text-destructive text-xs">{form.formState.errors.gpu.message}</p>}
+            </div>
+
+            <div className="space-y-2 md:col-span-2">
+              <label className="text-sm font-semibold flex items-center gap-2">
+                <Monitor className="w-4 h-4 text-primary" /> Display
+              </label>
+              <input
+                {...form.register("display")}
+                className="w-full bg-secondary border border-border rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+                placeholder="Contoh: 14 inci FHD IPS"
+              />
+              {form.formState.errors.display && <p className="text-destructive text-xs">{form.formState.errors.display.message}</p>}
+            </div>
           </div>
 
           <div className="space-y-2">

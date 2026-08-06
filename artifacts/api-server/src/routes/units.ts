@@ -1,6 +1,7 @@
 import { Router, type IRouter } from "express";
-import { eq, and, desc, count, sum, sql, gt } from "drizzle-orm";
-import { db, unitsTable, storeSettingsTable, qcChecklistResultsTable, sparepartsTable } from "@workspace/db";
+import { eq, and, desc, count, sum, sql, gt, asc, ilike, or } from "drizzle-orm";
+import { db, unitsTable, storeSettingsTable, qcChecklistResultsTable, sparepartsTable, masterLaptopsTable } from "@workspace/db";
+import { z } from "zod";
 import {
   ListUnitsQueryParams,
   CreateUnitBody,
@@ -28,6 +29,64 @@ import {
 } from "@workspace/api-zod";
 
 const router: IRouter = Router();
+
+const searchMasterLaptopsQuerySchema = z.object({
+  q: z.string().trim().optional(),
+  limit: z.coerce.number().int().min(1).max(20).optional(),
+});
+
+const masterLaptopSearchItemSchema = z.object({
+  id: z.number(),
+  brand: z.string(),
+  model: z.string(),
+  defaultCpu: z.string(),
+  defaultRam: z.string(),
+  defaultStorage: z.string(),
+  defaultGpu: z.string(),
+  defaultDisplay: z.string(),
+});
+
+const masterLaptopSearchResponseSchema = z.array(masterLaptopSearchItemSchema);
+
+// GET /master-laptops/search
+router.get("/master-laptops/search", async (req, res): Promise<void> => {
+  const parsed = searchMasterLaptopsQuerySchema.safeParse(req.query);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.message });
+    return;
+  }
+
+  const query = parsed.data.q?.trim() ?? "";
+  const limit = parsed.data.limit ?? 8;
+
+  if (!query) {
+    res.json([]);
+    return;
+  }
+
+  const items = await db
+    .select({
+      id: masterLaptopsTable.id,
+      brand: masterLaptopsTable.brand,
+      model: masterLaptopsTable.model,
+      defaultCpu: masterLaptopsTable.defaultCpu,
+      defaultRam: masterLaptopsTable.defaultRam,
+      defaultStorage: masterLaptopsTable.defaultStorage,
+      defaultGpu: masterLaptopsTable.defaultGpu,
+      defaultDisplay: masterLaptopsTable.defaultDisplay,
+    })
+    .from(masterLaptopsTable)
+    .where(
+      or(
+        ilike(masterLaptopsTable.model, `%${query}%`),
+        ilike(masterLaptopsTable.brand, `%${query}%`),
+      ),
+    )
+    .orderBy(asc(masterLaptopsTable.brand), asc(masterLaptopsTable.model))
+    .limit(limit);
+
+  res.json(masterLaptopSearchResponseSchema.parse(items));
+});
 
 // GET /units
 router.get("/units", async (req, res): Promise<void> => {
@@ -324,7 +383,14 @@ router.patch("/units/:id/jual", async (req, res): Promise<void> => {
   if (typeof hargaJual === "number" && hargaJual > 0) updateData.hargaJual = hargaJual;
   if (typeof namaPembeli === "string") updateData.namaPembeli = namaPembeli;
   if (typeof nomorPembeli === "string") updateData.nomorPembeli = nomorPembeli;
-  if (typeof tanggalJual === "string" && tanggalJual) updateData.tanggalJual = new Date(tanggalJual);
+  if (typeof tanggalJual === "string" && tanggalJual) {
+    const parsedTanggalJual = new Date(tanggalJual);
+    if (Number.isNaN(parsedTanggalJual.getTime())) {
+      res.status(400).json({ error: "Format tanggal jual tidak valid" });
+      return;
+    }
+    updateData.tanggalJual = parsedTanggalJual;
+  }
 
   if (Object.keys(updateData).length === 0) {
     res.status(400).json({ error: "Tidak ada data yang diupdate" }); return;

@@ -36,24 +36,24 @@ import {
 
 const CHECKLIST_TEMPLATE = {
   PHYSICAL: [
-    { itemKey: "body-frame", itemLabel: "Body/frame alignment and hinge tension" },
-    { itemKey: "keyboard-trackpad", itemLabel: "Keyboard and trackpad full key/gesture response" },
-    { itemKey: "ports-external", itemLabel: "External casing, ports, and screw integrity" },
+    { itemKey: "body-frame", itemLabel: "Keselarasan bodi/frame dan kekencangan engsel" },
+    { itemKey: "keyboard-trackpad", itemLabel: "Respons penuh keyboard dan trackpad (tombol/gesture)" },
+    { itemKey: "ports-external", itemLabel: "Kondisi casing luar, port, dan baut" },
   ],
   DISPLAY: [
-    { itemKey: "lcd-panel", itemLabel: "Panel uniformity (dead pixel, pressure mark, bleed)" },
-    { itemKey: "brightness-color", itemLabel: "Brightness control and color consistency" },
-    { itemKey: "webcam-mic", itemLabel: "Webcam clarity and microphone input" },
+    { itemKey: "lcd-panel", itemLabel: "Keseragaman panel (dead pixel, pressure mark, bleed)" },
+    { itemKey: "brightness-color", itemLabel: "Kontrol kecerahan dan konsistensi warna" },
+    { itemKey: "webcam-mic", itemLabel: "Kejernihan webcam dan input mikrofon" },
   ],
   HARDWARE_IO: [
-    { itemKey: "storage-health", itemLabel: "SSD/NVMe SMART health and thermal profile" },
-    { itemKey: "memory-stability", itemLabel: "RAM capacity detection and memory stability" },
-    { itemKey: "io-connectivity", itemLabel: "USB/HDMI/audio/Wi-Fi/Bluetooth functional test" },
+    { itemKey: "storage-health", itemLabel: "Kesehatan SMART SSD/NVMe dan profil suhu" },
+    { itemKey: "memory-stability", itemLabel: "Deteksi kapasitas RAM dan stabilitas memori" },
+    { itemKey: "io-connectivity", itemLabel: "Uji fungsi USB/HDMI/audio/Wi-Fi/Bluetooth" },
   ],
   PERFORMANCE_SOFTWARE: [
-    { itemKey: "boot-performance", itemLabel: "Boot and shutdown within benchmark threshold" },
-    { itemKey: "os-activation", itemLabel: "OS activation, updates, and essential drivers" },
-    { itemKey: "stress-thermal", itemLabel: "Stress test and thermal throttling behavior" },
+    { itemKey: "boot-performance", itemLabel: "Waktu boot dan shutdown dalam ambang standar" },
+    { itemKey: "os-activation", itemLabel: "Aktivasi OS, pembaruan, dan driver penting" },
+    { itemKey: "stress-thermal", itemLabel: "Uji beban dan perilaku thermal throttling" },
   ],
 } as const;
 
@@ -81,10 +81,16 @@ type Sparepart = {
 };
 
 const categoryLabel: Record<CategoryKey, string> = {
-  PHYSICAL: "Physical",
-  DISPLAY: "Display",
-  HARDWARE_IO: "Hardware / IO",
-  PERFORMANCE_SOFTWARE: "Performance / Software",
+  PHYSICAL: "Fisik",
+  DISPLAY: "Layar",
+  HARDWARE_IO: "Perangkat Keras / IO",
+  PERFORMANCE_SOFTWARE: "Performa / Perangkat Lunak",
+};
+
+const statusLabel: Record<ChecklistStatus, string> = {
+  PASS: "LULUS",
+  FAIL: "GAGAL",
+  "N/A": "N/A",
 };
 
 function buildChecklistInitialState(): ChecklistFormState {
@@ -157,19 +163,19 @@ export default function QcList() {
     <div className="p-4 md:p-8 max-w-4xl mx-auto space-y-6">
       <header className="flex items-center justify-between rounded-2xl border border-border bg-card p-5">
         <div>
-          <h1 className="text-3xl font-semibold tracking-tight text-foreground">QC Workbench</h1>
-          <p className="text-muted-foreground mt-1">Professional refurbishment inspection queue.</p>
+          <h1 className="text-3xl font-semibold tracking-tight text-foreground">Meja Kerja QC</h1>
+          <p className="text-muted-foreground mt-1">Antrean inspeksi refurbishment profesional.</p>
         </div>
         <div className="bg-amber-500/15 text-amber-700 dark:text-amber-300 px-3 py-1 rounded-full text-sm font-semibold flex items-center gap-2">
           <Wrench className="w-4 h-4" />
-          {units?.length || 0} Unit Pending
+          {units?.length || 0} Unit Menunggu
         </div>
       </header>
 
       {!units || units.length === 0 ? (
         <div className="bg-card border border-border rounded-xl p-12 text-center flex flex-col items-center">
           <Check className="w-12 h-12 text-emerald-500 mb-3 opacity-20" />
-          <h3 className="text-lg font-semibold">All clear</h3>
+          <h3 className="text-lg font-semibold">Semua Aman</h3>
           <p className="text-muted-foreground">Tidak ada unit yang menunggu QC saat ini.</p>
         </div>
       ) : (
@@ -243,7 +249,7 @@ function QcForm({ id, onBack }: { id: number; onBack: () => void }) {
   const { toast } = useToast();
 
   const [baterai, setBaterai] = useState<number>(85);
-  const [fisik, setFisik] = useState<string>("Refurbished Grade A");
+  const [fisik, setFisik] = useState<string>("Grade A - Sangat Mulus");
   const [appTambahan, setAppTambahan] = useState<string>("");
   const [activeTab, setActiveTab] = useState<CategoryKey>("PHYSICAL");
 
@@ -339,7 +345,7 @@ function QcForm({ id, onBack }: { id: number; onBack: () => void }) {
         onSuccess: () => {
           toast({
             title: "QC selesai",
-            description: "Checklist tersimpan, stok sparepart terpotong, unit berpindah ke READY.",
+            description: "Checklist tersimpan, stok sparepart terpotong, unit berpindah ke status Siap Jual.",
           });
           queryClient.invalidateQueries({ queryKey: getListUnitsQueryKey() });
           queryClient.invalidateQueries({ queryKey: getGetDashboardQueryKey() });
@@ -369,12 +375,12 @@ function QcForm({ id, onBack }: { id: number; onBack: () => void }) {
             <X className="w-5 h-5" />
           </button>
           <div>
-            <h1 className="text-2xl font-semibold text-foreground">QC Refurbishment Form</h1>
+            <h1 className="text-2xl font-semibold text-foreground">Form QC Peremajaan Unit</h1>
             <p className="text-primary font-medium">{unit.tipe}</p>
           </div>
         </div>
         <div className="text-right">
-          <p className="text-xs uppercase tracking-wide text-muted-foreground">Initial Cost</p>
+          <p className="text-xs uppercase tracking-wide text-muted-foreground">Modal Awal</p>
           <p className="text-lg font-semibold">{formatRupiah(unit.hargaBeli)}</p>
         </div>
       </header>
@@ -382,15 +388,15 @@ function QcForm({ id, onBack }: { id: number; onBack: () => void }) {
       <form onSubmit={handleSubmit} className="space-y-6">
         <section className="grid gap-4 lg:grid-cols-3">
           <div className="rounded-xl border border-border bg-card p-4">
-            <p className="text-xs uppercase tracking-wide text-muted-foreground">Sparepart Cost</p>
+            <p className="text-xs uppercase tracking-wide text-muted-foreground">Biaya Sparepart</p>
             <p className="text-xl font-semibold mt-1">{formatRupiah(totalSparepartCost)}</p>
           </div>
           <div className="rounded-xl border border-border bg-card p-4">
-            <p className="text-xs uppercase tracking-wide text-muted-foreground">Restoration Cost</p>
+            <p className="text-xs uppercase tracking-wide text-muted-foreground">Biaya Restorasi</p>
             <p className="text-xl font-semibold mt-1">{formatRupiah(restorationCost)}</p>
           </div>
           <div className="rounded-xl border border-border bg-card p-4">
-            <p className="text-xs uppercase tracking-wide text-muted-foreground">Failed Checks</p>
+            <p className="text-xs uppercase tracking-wide text-muted-foreground">Pemeriksaan Gagal</p>
             <p className="text-xl font-semibold mt-1">{selectedFailItems.length} item</p>
           </div>
         </section>
@@ -399,7 +405,7 @@ function QcForm({ id, onBack }: { id: number; onBack: () => void }) {
           <div className="rounded-xl border border-border bg-card p-4 lg:col-span-2 space-y-4">
             <h2 className="font-semibold flex items-center gap-2">
               <ClipboardCheck className="w-4 h-4 text-primary" />
-              Detailed International QC Checklist
+              Checklist QC Detail
             </h2>
 
             <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as CategoryKey)} className="space-y-4">
@@ -437,7 +443,7 @@ function QcForm({ id, onBack }: { id: number; onBack: () => void }) {
                                     : "bg-transparent text-muted-foreground hover:bg-secondary",
                                 )}
                               >
-                                {status}
+                                {statusLabel[status]}
                               </button>
                             ))}
                           </div>
@@ -482,12 +488,12 @@ function QcForm({ id, onBack }: { id: number; onBack: () => void }) {
           <div className="rounded-xl border border-border bg-card p-4 space-y-4 h-fit">
             <h2 className="font-semibold flex items-center gap-2 border-b border-border pb-3">
               <ShieldCheck className="w-4 h-4 text-primary" />
-              Final Condition
+              Kondisi Akhir
             </h2>
 
             <div className="space-y-2">
               <label className="text-sm font-medium flex items-center gap-2">
-                <Battery className="w-4 h-4 text-primary" /> Battery Health (%)
+                <Battery className="w-4 h-4 text-primary" /> Kesehatan Baterai (%)
               </label>
               <div className="flex items-center gap-3">
                 <input
@@ -505,17 +511,17 @@ function QcForm({ id, onBack }: { id: number; onBack: () => void }) {
             </div>
 
             <div className="space-y-2 pt-2 border-t border-border">
-              <label className="text-sm font-medium">Physical Grade</label>
+              <label className="text-sm font-medium">Grade Fisik</label>
               <input
                 value={fisik}
                 onChange={(e) => setFisik(e.target.value)}
                 className="w-full bg-secondary border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
-                placeholder="Contoh: Refurbished Grade A"
+                placeholder="Contoh: Grade A - Sangat Mulus"
               />
             </div>
 
             <div className="space-y-2 pt-2 border-t border-border">
-              <label className="text-sm font-medium">Installed Software Notes</label>
+              <label className="text-sm font-medium">Catatan Perangkat Lunak Terpasang</label>
               <input
                 value={appTambahan}
                 onChange={(e) => setAppTambahan(e.target.value)}
@@ -527,13 +533,13 @@ function QcForm({ id, onBack }: { id: number; onBack: () => void }) {
             <div className="rounded-lg border border-border bg-secondary/60 p-3 text-sm">
               <p className="font-medium flex items-center gap-2">
                 <DollarSign className="w-4 h-4 text-primary" />
-                Cost Formula
+                Rumus Biaya
               </p>
-              <p className="text-muted-foreground mt-1">Total restorasi dihitung otomatis: Harga Beli + total sparepart item FAIL.</p>
+              <p className="text-muted-foreground mt-1">Total restorasi dihitung otomatis: Harga Beli + total sparepart item GAGAL.</p>
             </div>
 
             <Button type="submit" disabled={completeQc.isPending} className="w-full">
-              {completeQc.isPending ? "Menyimpan QC..." : "Simpan QC dan Tandai READY"}
+              {completeQc.isPending ? "Menyimpan QC..." : "Simpan QC dan Tandai Siap Jual"}
             </Button>
           </div>
         </section>
@@ -560,7 +566,7 @@ function SparepartPicker({
 
   return (
     <div className="space-y-1">
-      <p className="text-xs font-medium text-muted-foreground">Replacement Sparepart</p>
+      <p className="text-xs font-medium text-muted-foreground">Sparepart Pengganti</p>
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           <button

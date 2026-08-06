@@ -38,6 +38,19 @@ type Sparepart = {
   tanggal: string;
 };
 
+async function getApiErrorMessage(res: Response, fallback: string): Promise<string> {
+  try {
+    const body = await res.json();
+    if (body && typeof body.error === "string" && body.error.trim().length > 0) {
+      return body.error;
+    }
+  } catch {
+    // Ignore non-JSON response body and fall back to default message.
+  }
+
+  return fallback;
+}
+
 export default function SparepartsPage() {
   const [activeTab, setActiveTab] = useState("beli");
   const [spareparts, setSpareparts] = useState<Sparepart[]>([]);
@@ -81,7 +94,8 @@ export default function SparepartsPage() {
     try {
       const res = await fetch("/api/spareparts?limit=200", { credentials: "include" });
       if (!res.ok) {
-        throw new Error("Gagal memuat sparepart");
+        const message = await getApiErrorMessage(res, "Gagal memuat sparepart");
+        throw new Error(message);
       }
       const data = await res.json();
       setSpareparts(data);
@@ -102,8 +116,8 @@ export default function SparepartsPage() {
       });
 
       if (!res.ok) {
-        const errorBody = await res.json();
-        throw new Error(errorBody?.error || "Gagal menyimpan sparepart");
+        const message = await getApiErrorMessage(res, "Gagal menyimpan sparepart");
+        throw new Error(message);
       }
 
       const created = await res.json();
@@ -126,8 +140,8 @@ export default function SparepartsPage() {
       });
 
       if (!res.ok) {
-        const errorBody = await res.json();
-        throw new Error(errorBody?.error || "Gagal menyimpan QC");
+        const message = await getApiErrorMessage(res, "Gagal menyimpan QC");
+        throw new Error(message);
       }
 
       await res.json();
@@ -151,7 +165,7 @@ export default function SparepartsPage() {
       <header className="space-y-3">
         <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-foreground">Sparepart Purchase & QC Replacement</h1>
+            <h1 className="text-3xl font-bold text-foreground">Pembelian Sparepart & Penggantian QC</h1>
             <p className="text-muted-foreground mt-1">Input pembelian sparepart dan catat penggantian QC secara terpisah.</p>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -159,7 +173,7 @@ export default function SparepartsPage() {
               {isLoadingSpareparts ? "Memuat..." : "Segarkan Spareparts"}
             </Button>
             <Button onClick={() => setActiveTab("beli")}>Tab Beli</Button>
-            <Button onClick={() => setActiveTab("qc")}>Tab QC</Button>
+            <Button onClick={() => setActiveTab("qc")}>Tab Penggantian QC</Button>
           </div>
         </div>
         {sparepartError ? <p className="text-destructive text-sm">{sparepartError}</p> : null}
@@ -205,7 +219,9 @@ export default function SparepartsPage() {
               <div className="rounded-md border border-border bg-secondary px-4 py-3 text-sm text-muted-foreground">Dihasilkan otomatis setelah simpan</div>
             </div>
 
-            <Button type="submit">Simpan Pembelian</Button>
+            <Button type="submit" disabled={buyForm.formState.isSubmitting}>
+              {buyForm.formState.isSubmitting ? "Menyimpan pembelian..." : "Simpan Pembelian"}
+            </Button>
           </form>
         </TabsContent>
 
@@ -256,7 +272,9 @@ export default function SparepartsPage() {
               <p className="mt-1">Pilih sparepart yang tersedia, lalu gunakan harga beli sebagai referensi harga penggantian.</p>
             </div>
 
-            <Button type="submit">Simpan QC Penggantian</Button>
+            <Button type="submit" disabled={qcForm.formState.isSubmitting}>
+              {qcForm.formState.isSubmitting ? "Menyimpan penggantian..." : "Simpan QC Penggantian"}
+            </Button>
           </form>
         </TabsContent>
       </Tabs>

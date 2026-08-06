@@ -43,6 +43,19 @@ const listSparepartsQuerySchema = z.object({
   offset: z.coerce.number().optional(),
 });
 
+function toIsoString(value: Date | string): string {
+  if (value instanceof Date) {
+    return value.toISOString();
+  }
+
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) {
+    return value;
+  }
+
+  return parsed.toISOString();
+}
+
 function formatDateForSku(date: Date) {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, "0");
@@ -89,8 +102,8 @@ router.get("/spareparts", async (req, res): Promise<void> => {
 
   res.json(items.map((item) => ({
     ...item,
-    tanggal: item.tanggal.toISOString(),
-    createdAt: item.createdAt.toISOString(),
+    tanggal: toIsoString(item.tanggal),
+    createdAt: toIsoString(item.createdAt),
   })));
 });
 
@@ -102,7 +115,13 @@ router.post("/spareparts", async (req, res): Promise<void> => {
     return;
   }
 
-  const tanggal = parsed.data.tanggal ? new Date(parsed.data.tanggal) : new Date();
+  const tanggalInput = parsed.data.tanggal?.trim();
+  const tanggal = tanggalInput ? new Date(tanggalInput) : new Date();
+  if (Number.isNaN(tanggal.getTime())) {
+    res.status(400).json({ error: "Format tanggal tidak valid" });
+    return;
+  }
+
   const sku = await generateSku(tanggal);
 
   const [created] = await db
@@ -118,8 +137,8 @@ router.post("/spareparts", async (req, res): Promise<void> => {
 
   res.status(201).json(sparepartResponseSchema.parse({
     ...created,
-    tanggal: created.tanggal.toISOString(),
-    createdAt: created.createdAt.toISOString(),
+    tanggal: toIsoString(created.tanggal),
+    createdAt: toIsoString(created.createdAt),
   }));
 });
 
@@ -131,9 +150,14 @@ router.post("/spareparts/qc", async (req, res): Promise<void> => {
     return;
   }
 
-  const tanggalPenggantian = parsed.data.tanggalPenggantian
-    ? new Date(parsed.data.tanggalPenggantian)
+  const tanggalPenggantianInput = parsed.data.tanggalPenggantian?.trim();
+  const tanggalPenggantian = tanggalPenggantianInput
+    ? new Date(tanggalPenggantianInput)
     : new Date();
+  if (Number.isNaN(tanggalPenggantian.getTime())) {
+    res.status(400).json({ error: "Format tanggal penggantian tidak valid" });
+    return;
+  }
 
   let created: typeof qcUsageTable.$inferSelect | undefined;
 
@@ -173,9 +197,9 @@ router.post("/spareparts/qc", async (req, res): Promise<void> => {
 
   res.status(201).json(qcUsageResponseSchema.parse({
     ...created,
-    tanggalPenggantian: created.tanggalPenggantian.toISOString(),
+    tanggalPenggantian: toIsoString(created.tanggalPenggantian),
     catatan: created.catatan,
-    createdAt: created.createdAt.toISOString(),
+    createdAt: toIsoString(created.createdAt),
   }));
 });
 
