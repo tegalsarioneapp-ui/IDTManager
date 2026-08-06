@@ -7,10 +7,25 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
+type SocialPlatformKey = "instagram" | "whatsapp" | "facebook" | "tiktok" | "website";
+
+type SocialPlatform = {
+  key: SocialPlatformKey;
+  label: string;
+  icon: React.ElementType;
+  color: string;
+  ring: string;
+  border: string;
+  placeholder: string;
+  prefix?: string;
+  iconLabel?: string;
+  fullWidth?: boolean;
+};
+
 // ─── Platform config ───────────────────────────────────────────────────────────
-const SOCIAL_PLATFORMS = [
+const SOCIAL_PLATFORMS: SocialPlatform[] = [
   {
-    key: "instagram" as const,
+    key: "instagram",
     label: "Instagram",
     icon: Instagram,
     color: "text-pink-500",
@@ -20,7 +35,7 @@ const SOCIAL_PLATFORMS = [
     prefix: "@",
   },
   {
-    key: "whatsapp" as const,
+    key: "whatsapp",
     label: "WhatsApp",
     icon: MessageCircle,
     color: "text-green-500",
@@ -29,7 +44,7 @@ const SOCIAL_PLATFORMS = [
     placeholder: "628xxxxxxxxx",
   },
   {
-    key: "facebook" as const,
+    key: "facebook",
     label: "Facebook",
     icon: Facebook,
     color: "text-blue-500",
@@ -38,7 +53,7 @@ const SOCIAL_PLATFORMS = [
     placeholder: "nama halaman atau URL",
   },
   {
-    key: "tiktok" as const,
+    key: "tiktok",
     label: "TikTok",
     icon: AtSign,
     color: "text-foreground",
@@ -50,7 +65,7 @@ const SOCIAL_PLATFORMS = [
     iconLabel: "TT",
   },
   {
-    key: "website" as const,
+    key: "website",
     label: "Website",
     icon: Globe,
     color: "text-sky-400",
@@ -59,7 +74,7 @@ const SOCIAL_PLATFORMS = [
     placeholder: "https://tokosaya.com",
     fullWidth: true,
   },
-] as const;
+];
 
 // ─── Page ──────────────────────────────────────────────────────────────────────
 export default function Settings() {
