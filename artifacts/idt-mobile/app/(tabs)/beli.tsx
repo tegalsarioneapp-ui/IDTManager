@@ -82,7 +82,7 @@ export default function BeliScreen() {
           <Field
             label="Harga Beli (Rp) *"
             value={hargaBeli}
-            onChange={v => setHargaBeli(v.replace(/\D/g, ''))}
+            onChange={(v: string) => setHargaBeli(v.replace(/\D/g, ''))}
             placeholder="0"
             keyboardType="numeric"
             colors={colors}
