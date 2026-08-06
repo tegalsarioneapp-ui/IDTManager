@@ -3,6 +3,7 @@ import healthRouter from "./health";
 import authRouter from "./auth";
 import unitsRouter from "./units";
 import settingsRouter from "./settings";
+import sparepartsRouter from "./spareparts";
 
 const router: IRouter = Router();
 
@@ -22,6 +23,7 @@ router.use((req: Request, res: Response, next: NextFunction): void => {
 
 // Protected routes
 router.use(unitsRouter);
+router.use(sparepartsRouter);
 router.use(settingsRouter);
 
 export default router;

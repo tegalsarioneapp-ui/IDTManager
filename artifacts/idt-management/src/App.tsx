@@ -18,6 +18,7 @@ import Laporan from '@/pages/laporan';
 import Sosmed from '@/pages/sosmed';
 import SettingsPage from '@/pages/settings';
 import DaftarUnit from '@/pages/daftar-unit';
+import Spareparts from '@/pages/spareparts';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -55,6 +56,7 @@ function Router() {
       <Switch>
         <Route path="/" component={Dashboard} />
         <Route path="/beli" component={Beli} />
+        <Route path="/spareparts" component={Spareparts} />
         <Route path="/qc" component={QcList} />
         <Route path="/jual" component={JualList} />
         <Route path="/terjual" component={TerjualList} />

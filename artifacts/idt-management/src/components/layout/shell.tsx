@@ -13,6 +13,7 @@ import {
   Store,
   Grid3X3,
   ShoppingCart,
+  Box,
   ChevronDown,
   ChevronRight,
   X,
@@ -24,12 +25,13 @@ import { useAuth } from "@/context/auth";
 import { useToast } from "@/hooks/use-toast";
 
 // ─── Route groups ──────────────────────────────────────────────────────────────
-const MANAJEMEN_PATHS = ["/beli", "/qc", "/jual", "/terjual"] as const;
+const MANAJEMEN_PATHS = ["/beli", "/spareparts", "/qc", "/jual", "/terjual"] as const;
 const PROFIL_PATHS = ["/sosmed", "/settings"] as const;
 
 const MANAJEMEN_ITEMS = [
   { href: "/daftar", label: "Daftar Unit", icon: LayoutList },
   { href: "/beli", label: "Beli Unit", icon: ShoppingCart },
+  { href: "/spareparts", label: "Spareparts", icon: Box },
   { href: "/qc", label: "Quality Control", icon: ClipboardCheck, badgeKey: "qc" },
   { href: "/jual", label: "Jual", icon: Tags },
   { href: "/terjual", label: "Terjual", icon: CheckCircle2 },
