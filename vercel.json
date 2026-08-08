@@ -1,0 +1,11 @@
+{
+  "version": 2,
+  "installCommand": "pnpm install --frozen-lockfile",
+  "buildCommand": "pnpm --filter @workspace/api-server run build",
+  "functions": {
+    "api/[...path].ts": {
+      "runtime": "@vercel/node@5.3.24",
+      "maxDuration": 30
+    }
+  }
+}
