@@ -4,7 +4,7 @@
   "buildCommand": "pnpm --filter @workspace/api-server run build",
   "functions": {
     "api/[...path].ts": {
-      "runtime": "@vercel/node@5.3.24",
+      "runtime": "nodejs22.x",
       "maxDuration": 30
     }
   }
